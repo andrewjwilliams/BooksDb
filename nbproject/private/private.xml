@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/home/ajw/webprojects/booksdb/app/Http/Controllers/BookController.php</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/views/welcome.blade.php</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/js/components/DatatableActionButton.vue</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/js/components/App.vue</file>
+            <file>file:/home/ajw/webprojects/booksdb/app/Models/Book.php</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/views/home.blade.php</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/js/components/DatatableActionButtons.vue</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/views/layouts/app.blade.php</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/js/components/BooksCreate.vue</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/js/books.js</file>
+            <file>file:/home/ajw/webprojects/booksdb/resources/js/app.js</file>
+        </group>
+    </open-files>
+</project-private>
