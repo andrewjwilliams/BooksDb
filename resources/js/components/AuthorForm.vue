@@ -5,7 +5,7 @@
 
         <div v-if="this.$parent.mode == 'edit'">
             <input type="hidden" v-model="author.id" name="id" ref="id">
-        </div>	
+        </div>
 
         <div class="col-xs-12 col-sm-12 col-md-12">
             <div class="form-group">
@@ -24,9 +24,8 @@
         <div class="col-xs-12 col-sm-12 col-md-12 text-center">
             <button v-if="this.$parent.mode == 'edit'" type="submit" class="btn btn-success"><font-awesome-icon :icon="['fas', 'check']"></font-awesome-icon> Save</button>
             <button v-if="this.$parent.mode == 'create'" type="submit" class="btn btn-success"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Create</button>
-            
+
             <button type="button" class="btn btn-danger" v-on:click="closeForm()"><font-awesome-icon :icon="['fas', 'times']"></font-awesome-icon> Cancel</button>
-            
         </div>
 
     </form>
@@ -38,40 +37,39 @@
 			return {}
         },
         methods: {
-            closeView() {
+            closeForm() {
 				this.$root.$refs.app.clearAlert();
 				this.$parent.mode = 'index';
             },
-            checkForm: function (e) {
+            checkForm(e) {
 				e.preventDefault();
 
 				var root = this.$root.$refs.app;
 				var parent = this.$parent;
-				var formFields = JSON.parse(JSON.stringify(this.author));	// Get fields from the form ( copy not by reference so we can manipulate before saving)
-				var id = this.author.id;								// and the id
+				var formFields = JSON.parse(JSON.stringify(this.author));
+				var id = this.author.id;
 
 				this.errors = [];
-				if (!formFields.name) { 
+				if (!formFields.name) {
 					root.setAlert('Name required', 'danger');
-					
+
 				} else {
 					root.setAlert('Saving', 'loading');
 
-					delete formFields.id;							// We dont want id
-					delete formFields.created_at;					// or the created
-					delete formFields.updated_at;					// or updated times
+					delete formFields.id;
+					delete formFields.created_at;
+					delete formFields.updated_at;
 
 					if (this.$parent.mode == 'edit') {
-						axios.put('/api/authors/'+id, formFields ).then(response => {
+						axios.put('/api/authors/'+id, formFields).then(response => {
 							root.setAlert('Saved record', 'success');
-							console.log(response);
 							parent.mode = 'index';
 						}).catch(error => {
 							root.setAlert('Unable to save record', 'danger');
 							console.log(error);
 						});
 					} else {
-						axios.post('/api/authors', formFields).then(function (response, status, request) {
+						axios.post('/api/authors', formFields).then(function (response) {
 							root.setAlert('Created new author record', 'success');
 							parent.mode = 'index';
 						}, function (error) {

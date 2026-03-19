@@ -2,11 +2,11 @@
 	<form @submit="checkForm" id="book-form" action="">
 		<h2 v-if="this.$parent.mode == 'edit'">Edit {{ book.title }} </h2>
 		<h2 v-if="this.$parent.mode == 'create'">Create New Book</h2>
-        
-		<div class="row"> 
+
+		<div class="row">
 			<div v-if="this.$parent.mode == 'edit'">
 				<input type="hidden" v-model="book.id" name="id" ref="id">
-			</div>			
+			</div>
 
             <div class="col-xs-12 col-sm-12 col-md-12">
                 <div class="form-group">
@@ -29,7 +29,6 @@
 				</div>
 			</div>
 
-			
 			<input type="hidden" v-model="book.author_id" name="author_id" ref="author_id">
 
 			<div class="col-xs-12 col-sm-12 col-md-12">
@@ -47,7 +46,7 @@
 							url="/api/authors/datatable"
 							:per-page="authorsDt.perPage"
 							:columns="authorsDt.columns">
-						</data-table> 
+						</data-table>
 
 						<button @click="createAuthor" class="btn btn-success" type="button"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add</button>
 
@@ -73,7 +72,7 @@
 			<div class="col-xs-12 col-sm-12 col-md-12">
                 <div class="form-group">
 					<fieldset>
-						<legend>Classification</legend> 
+						<legend>Classification</legend>
 						<div class="row">
 							<div class="col-xs-12 col-sm-12 col-md-6">
 								<div class="form-group">
@@ -96,7 +95,7 @@
 			<div class="col-xs-12 col-sm-12 col-md-12">
                 <div class="form-group">
 					<fieldset>
-						<legend>Index</legend> 
+						<legend>Index</legend>
 
 						<div class="row">
 							<div class="col-xs-12 col-sm-12 col-md-6">
@@ -105,7 +104,7 @@
 									<input type="text" v-model="book.isbn_10" id="isbn_10" name="isbn_10" class="form-control" placeholder="ISBN 10" aria-label="ISBN 10">
 								</div>
 							</div>
-							
+
 							<div class="col-xs-12 col-sm-12 col-md-6">
 								<div class="form-group">
 									<label for='isbn_13'>ISBN 13</label>
@@ -133,7 +132,6 @@
 									<input type="text" v-model="book.lccn" id="lccn" name="lccn" class="form-control" placeholder="LCCN" aria-label="LCCN">
 								</div>
 							</div>
-							
 
 							<div class="col-xs-12 col-sm-12 col-md-6">
 								<div class="form-group">
@@ -141,14 +139,14 @@
 									<input type="text" v-model="book.amazon" id="amazon" name="amazon" class="form-control" placeholder="Amazon" aria-label="Amazon">
 								</div>
 							</div>
-		
+
 							<div class="col-xs-12 col-sm-12 col-md-6">
 								<div class="form-group">
 									<label for='oclc'>Online Computer Library Centre</label>
 									<input type="text" v-model="book.oclc" id="oclc" name="oclc" class="form-control" placeholder="OCLC" aria-label="OCLC">
 								</div>
 							</div>
-									
+
 							<div class="col-xs-12 col-sm-12 col-md-6">
 								<div class="form-group">
 									<label for='librarything'>Library Thing</label>
@@ -162,10 +160,11 @@
 									<input type="text" v-model="book.project_gutenberg" id="project_gutenberg" name="project_gutenberg" class="form-control" placeholder="Project Gutenberg" aria-label="Project Gutenberg">
 								</div>
 							</div>
-														
+
 							<div class="col-xs-12 col-sm-12 col-md-6">
 								<div class="form-group">
-									<label for='goodreads'>Goodreads</label><input type="text" v-model="book.goodreads" id="goodreads" name="goodreads" class="form-control" placeholder="Goodreads" aria-label="Goodreads">`
+									<label for='goodreads'>Goodreads</label>
+									<input type="text" v-model="book.goodreads" id="goodreads" name="goodreads" class="form-control" placeholder="Goodreads" aria-label="Goodreads">
 								</div>
 							</div>
 						</div>
@@ -176,7 +175,7 @@
             <div class="col-xs-12 col-sm-12 col-md-12 text-center">
                 <button v-if="this.$parent.mode == 'edit'" type="submit" class="btn btn-success"><font-awesome-icon :icon="['fas', 'check']"></font-awesome-icon> Save</button>
 				<button v-if="this.$parent.mode == 'create'" type="submit" class="btn btn-success"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Create</button>
-				
+
 				<button type="button" class="btn btn-danger" v-on:click="closeForm()"><font-awesome-icon :icon="['fas', 'times']"></font-awesome-icon> Cancel</button>
             </div>
         </div>
@@ -209,7 +208,7 @@
 							label: '',
 							name: 'Select',
 							component: DatatableActionButton,
-							classes: { 
+							classes: {
 								'btn': true,
 								'btn-info': true,
 								'btn-sm': true,
@@ -230,22 +229,21 @@
 			window.scrollTo(0,0);
 
 			if (this.book.author_id) {
-				var response = axios.get('/api/authors/' + this.book.author_id).then(function (response) {
-					self.author  =  response.data ;
+				axios.get('/api/authors/' + this.book.author_id).then(function (response) {
+					self.author = response.data;
 				})
 				.catch(function (error) {
 					console.log(error);
 				});
 			}
 		},
-		
+
 		methods: {
-			validIsbn : function(i) {
-				if (i==null) return false;
+			validIsbn(i) {
+				if (i == null) return false;
 				return isValidIsbn(i);
 			},
-			getByIsbn : function() {
-				var parent = this.$parent;
+			getByIsbn() {
 				var root = this.$root.$refs.app;
 				var self = this;
 
@@ -264,35 +262,35 @@
 						}
 
 						if (typeof bookObj.publishers !== 'undefined') {
-							self.book.lc_classification = bookObj.publishers.join();
+							self.book.publisher = bookObj.publishers.join();
 						} else {
-							self.book.lc_classification = '';
+							self.book.publisher = '';
 						}
 
 						if (typeof bookObj.identifiers !== 'undefined') {
-							$.each(bookObj.identifiers, function(k, v) {					// Loop each identifier
+							$.each(bookObj.identifiers, function(k, v) {
 								self.book[k] = v.join();
 							});
 						}
 
-						if (typeof bookObj.authors !== 'undefined' && typeof bookObj.authors[0] !== 'undefined') {		// Is there an author set?
-							var authorOlKey = bookObj.authors[0].url;													// Yes - so get the author details from open library
+						if (typeof bookObj.authors !== 'undefined' && typeof bookObj.authors[0] !== 'undefined') {
+							var authorOlKey = bookObj.authors[0].url;
 
 							axios.get('/api/authors/open_library_ref:' + authorOlKey.split("/")[4]).then(function (olResponse) {
-								
-								if (olResponse.data.length === 0) {		// No response so new (to us) author
-									axios.post('/api/authors', {name: bookObj.authors[0].name, open_library_ref:authorOlKey.split("/")[4]}).then(function (sResponse, status, request) {
-										self.book.author_id = sResponse.data.id;
-										self.author  =  sResponse.data;
 
-										root.setAlert('Found book and author from ISBN.', 'success');	
+								if (olResponse.data.length === 0) {
+									axios.post('/api/authors', {name: bookObj.authors[0].name, open_library_ref:authorOlKey.split("/")[4]}).then(function (sResponse) {
+										self.book.author_id = sResponse.data.id;
+										self.author = sResponse.data;
+
+										root.setAlert('Found book and author from ISBN.', 'success');
 									}).catch(function (error) {
-										root.setAlert("Found book from ISBN, can't get author", 'warning');	
+										root.setAlert("Found book from ISBN, can't get author", 'warning');
 										console.log(error);
 									});
 								} else {
 									self.book.author_id = olResponse.data[0].id;
-									self.author  =  olResponse.data[0];
+									self.author = olResponse.data[0];
 
 									root.setAlert('Found book and author from ISBN.', 'success');
 								}
@@ -301,7 +299,6 @@
 								console.log(error);
 								root.setAlert("Found book from ISBN, can't get author", 'warning');
 							});
-
 
 						} else {
 							root.setAlert('Found book from ISBN', 'success');
@@ -313,38 +310,37 @@
 				}
 
 				root.setAlert('Looking up ISBN', 'loading');
-				lookupIsbn(lookupIsbnCallback, $('#isbn').val());
+				lookupIsbn(lookupIsbnCallback, self.book.isbn);
 			},
-			checkForm: function (e) {
+			checkForm(e) {
 				e.preventDefault();
 
 				var root = this.$root.$refs.app;
 				var parent = this.$parent;
-				var formFields = JSON.parse(JSON.stringify(this.book));	// Get fields from the form ( copy not by reference so we can manipulate before saving)
-				var id = this.book.id;								// and the id
+				var formFields = JSON.parse(JSON.stringify(this.book));
+				var id = this.book.id;
 
 				this.errors = [];
-				if (!formFields.title) { 
+				if (!formFields.title) {
 					root.setAlert('Title required', 'danger');
-					
+
 				} else {
 					root.setAlert('Saving', 'loading');
 
-					delete formFields.id;							// We dont want id
-					delete formFields.created_at;					// or the created
-					delete formFields.updated_at;					// or updated times
+					delete formFields.id;
+					delete formFields.created_at;
+					delete formFields.updated_at;
 
 					if (this.$parent.mode == 'edit') {
-						axios.put('/api/books/'+id, formFields ).then(response => {
+						axios.put('/api/books/'+id, formFields).then(response => {
 							root.setAlert('Saved record', 'success');
-							console.log(response);
 							parent.mode = 'index';
 						}).catch(error => {
 							root.setAlert('Unable to save record', 'danger');
 							console.log(error);
 						});
 					} else {
-						axios.post('/api/books', formFields).then(function (response, status, request) {
+						axios.post('/api/books', formFields).then(function (response) {
 							root.setAlert('Created new book record', 'success');
 							parent.mode = 'index';
 						}, function (error) {
@@ -358,13 +354,13 @@
 				this.$root.$refs.app.clearAlert();
 				this.$parent.mode = 'index';
 			},
-			selectAuthor: function (data) {
+			selectAuthor(data) {
 				var self = this;
 
 				this.book.author_id = data.id;
 
-				var response = axios.get('/api/authors/' + data.id).then(function (response) {
-					self.author  =  response.data;
+				axios.get('/api/authors/' + data.id).then(function (response) {
+					self.author = response.data;
 				})
 				.catch(function (error) {
 					console.log(error);
@@ -379,14 +375,14 @@
 
 				root.setAlert('Adding author', 'loading');
 
-				if (newAuthor != null && newAuthor  != "") {
-					axios.post('/api/authors', {name: newAuthor}).then(function (response, status, request) {
+				if (newAuthor != null && newAuthor != "") {
+					axios.post('/api/authors', {name: newAuthor}).then(function (response) {
 						self.book.author_id = response.data.id;
-						self.author  =  response.data;
+						self.author = response.data;
 
-						root.setAlert('Added author for book', 'success');	
+						root.setAlert('Added author for book', 'success');
 					}).catch(function (error) {
-						root.setAlert("Can't add author", 'danger');	
+						root.setAlert("Can't add author", 'danger');
 						console.log(error);
 					});
 				}
@@ -396,7 +392,7 @@
 		},
 		props: ['book']
 	}
-	
+
 	function lookupIsbn(callback, value) {
 		$.ajax({
 			type: 'get',
@@ -421,12 +417,7 @@
 	}
 
 	var isValidIsbn = function(str) {
-
-		var sum,
-			weight,
-			digit,
-			check,
-			i;
+		var sum, weight, digit, check, i;
 
 		str = str.replace(/[^0-9X]/gi, '');
 

@@ -6,16 +6,15 @@
 					<div class="col-md-10">
 						<br>
 						<div v-bind:class="{
-							'alert': true, 
+							'alert': true,
 							'alert-primary': alert.type == 'primary',
-							'alert-secondary': alert.type == 'secondary',
-							'alert-secondary': alert.type == 'loading',
+							'alert-secondary': alert.type == 'secondary' || alert.type == 'loading',
 							'alert-info': alert.type == 'info',
 							'alert-success': alert.type == 'success',
 							'alert-warning': alert.type == 'warning',
 							'alert-danger': alert.type == 'danger',
-							'd.none': alert.hidden
-						}" 
+							'd-none': alert.hidden
+						}"
 						role="alert">
 							<div v-if="alert.type=='loading'" class="spinner-border" role="status">
 								<span class="sr-only">Loading...</span>
@@ -28,7 +27,7 @@
 
 							<p>
 								Welcome to BooksDb. Please make your choice from the menu above.
-							</p> 
+							</p>
 
 							<GChart
 								type="BarChart"
@@ -38,9 +37,9 @@
 						</div>
 						<book v-if="mode=='book'"></book>
 						<author v-if="mode=='author'"></author>
-					</div><!-- /col -->
-				</div><!-- /row -->
-			</div><!-- /container -->
+					</div>
+				</div>
+			</div>
         </main>
 	</div>
 </template>
@@ -80,30 +79,30 @@ export default {
         }
     },
     methods: {
-        setAlert : function(msg, type) {
+        setAlert(msg, type) {
             this.alert.msg = msg;
             this.alert.type = type;
             this.alert.hidden = false;
         },
-        clearAlert : function() {
+        clearAlert() {
 			this.alert.hidden = true;
 			this.alert.msg = '';
             this.alert.type = '';
 		},
-		refreshGraph :  function() {
+		refreshGraph() {
 			var self = this;
 
-			var response = axios.get('/api/books/count').then(function (response) {
-				self.num.books  =  response.data.count;
-				self.chartData[1][1] =  parseInt(response.data.count);
+			axios.get('/api/books/count').then(function (response) {
+				self.num.books = response.data.count;
+				self.chartData[1][1] = parseInt(response.data.count);
 			})
 			.catch(function (error) {
 				console.log(error);
 			});
 
-			var response = axios.get('/api/authors/count').then(function (response) {
-				self.num.authors  =  response.data.count;
-				self.chartData[2][1] =  parseInt(response.data.count);
+			axios.get('/api/authors/count').then(function (response) {
+				self.num.authors = response.data.count;
+				self.chartData[2][1] = parseInt(response.data.count);
 			})
 			.catch(function (error) {
 				console.log(error);
@@ -111,7 +110,7 @@ export default {
 		}
 	},
 	mounted() {
-		this.refreshGraph();	
+		this.refreshGraph();
 	},
 	components: {
 		GChart
