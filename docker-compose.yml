@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .
+      target: app
+    container_name: booksdb_app
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    volumes:
+      - app_storage:/var/www/html/storage
+
+  nginx:
+    build:
+      context: .
+      target: nginx
+    container_name: booksdb_nginx
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      - app
+
+volumes:
+  app_storage:

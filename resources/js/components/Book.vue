@@ -8,16 +8,16 @@
 				url="/api/books/datatable"
 				:per-page="dt.perPage"
 				:columns="dt.columns">
-			</data-table>  
+			</data-table>
 			<div>
 			  <button @click="create" class="btn btn-success"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add</button>
 			</div>
-		</div><!-- /books-index -->
+		</div>
 
 		<book-form v-if="this.mode == 'create' || this.mode == 'edit'" :book="book"></book-form>
 
 		<book-view v-if="this.mode == 'view'" :book="book"></book-view>
-	</div><!-- /books -->
+	</div>
 </template>
 <script>
 
@@ -56,7 +56,7 @@ export default {
 								{
 									id: 'btnActionsView',
 									name: '',
-									classes: { 
+									classes: {
 										'btn': true,
 										'btn-info': true,
 										'btn-sm': true,
@@ -71,7 +71,7 @@ export default {
 								{
 									id: 'btnActionsEdit',
 									name: '',
-									classes: { 
+									classes: {
 										'btn': true,
 										'btn-info': true,
 										'btn-sm': true,
@@ -86,7 +86,7 @@ export default {
 								{
 									id: 'btnActionsDelete',
 									name: '',
-									classes: { 
+									classes: {
 										'btn': true,
 										'btn-danger': true,
 										'btn-sm': true,
@@ -95,7 +95,7 @@ export default {
 									handler: this.deleteBook,
 									meta: {
 										icon: ['fas', 'trash'],
-										title: "Edit"
+										title: "Delete"
 									},
 								}
 							]
@@ -104,14 +104,13 @@ export default {
 				]
 			}
         };
-
     },
     methods: {
 		async displayRow(data) {
             this.$root.$refs.app.setAlert('Getting book', 'loading');
 
 			var response = await axios.get('/api/books/' + data.id);
-			this.book  =  response.data ;
+			this.book = response.data;
 
 			this.mode = 'view';
 
@@ -121,7 +120,7 @@ export default {
 			this.$root.$refs.app.setAlert('Getting book', 'loading');
 
 			var response = await axios.get('/api/books/' + data.id);
-			this.book  =  response.data ;
+			this.book = response.data;
 
 			this.mode = 'edit';
 
@@ -131,7 +130,7 @@ export default {
 			if (confirm(`Are you sure you want to delete ${data.name} ? `)) {
 				this.$root.$refs.app.setAlert('Delete book', 'loading');
 
-				var response = await axios.delete('/api/books/' + data.id);
+				await axios.delete('/api/books/' + data.id);
 
 				this.mode = 'xxx';
 				this.$nextTick(() => {
@@ -162,9 +161,9 @@ export default {
 				librarything: null,
 				project_gutenberg: null,
 				goodreads: null
-			};  
+			};
 		}
     },
     components: {}
-  }
+}
 </script>

@@ -1,77 +1,44 @@
-/**
- * First we will load all of this project's JavaScript dependencies which
- * includes Vue and other libraries. It is a great starting point when
- * building robust, powerful web applications using Vue and Laravel.
- */
+import './bootstrap';
 
-require('./bootstrap');
-
-window.Vue = require('vue');
-
-
-
-
-/* use the datatable plug in */
+import Vue from 'vue';
 import DataTable from 'laravel-vue-datatable';
+
 Vue.use(DataTable);
 
-/**
- * Use font awesome 
- * 
- * https://github.com/FortAwesome/vue-fontawesome
- */
 import { library } from '@fortawesome/fontawesome-svg-core';
-
-import { 
-	faCheck,
-	faPencilAlt,
-	faPlus,
-	faSearch,
-	faTimes,
-	faTrash
+import {
+    faCheck,
+    faPencilAlt,
+    faPlus,
+    faSearch,
+    faTimes,
+    faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-library.add(faCheck);
-library.add(faPencilAlt);
-library.add(faPlus);
-library.add(faSearch);
-library.add(faTimes);
-library.add(faTrash);
-
-
-//import { faFontAwesome } from '@fortawesome/free-brands-svg-icons';
-//
-//library.add(faFontAwesome);
+library.add(faCheck, faPencilAlt, faPlus, faSearch, faTimes, faTrash);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
-/**
- * The following block of code may be used to automatically register your
- * Vue components. It will recursively scan this directory for the Vue
- * components and automatically register them with their "basename".
- *
- * Eg. ./components/ExampleComponent.vue -> <example-component></example-component>
- */
+import App from './components/App.vue';
+import Navigation from './components/Navigation.vue';
+import Author from './components/Author.vue';
+import AuthorForm from './components/AuthorForm.vue';
+import AuthorView from './components/AuthorView.vue';
+import Book from './components/Book.vue';
+import BookForm from './components/BookForm.vue';
+import BookView from './components/BookView.vue';
+import DatatableActionButton from './components/DatatableActionButton.vue';
 
-// const files = require.context('./', true, /\.vue$/i)
-// files.keys().map(key => Vue.component(key.split('/').pop().split('.')[0], files(key).default))
-
-Vue.component('app', require('./components/App.vue').default);
-Vue.component('navigation', require('./components/Navigation.vue').default);
-Vue.component('author', require('./components/Author.vue').default);
-Vue.component('author-form', require('./components/AuthorForm.vue').default);
-Vue.component('author-view', require('./components/AuthorView.vue').default);
-Vue.component('book', require('./components/Book.vue').default);
-Vue.component('book-form', require('./components/BookForm.vue').default);
-Vue.component('book-view', require('./components/BookView.vue').default);
-Vue.component('datatable-action-button', require('./components/DatatableActionButton.vue').default);
-
-/**
- * Next, we will create a fresh Vue application instance and attach it to
- * the page. Then, you may begin adding components to this application
- * or customize the JavaScript scaffolding to fit your unique needs.
- */
+Vue.component('app', App);
+Vue.component('navigation', Navigation);
+Vue.component('author', Author);
+Vue.component('author-form', AuthorForm);
+Vue.component('author-view', AuthorView);
+Vue.component('book', Book);
+Vue.component('book-form', BookForm);
+Vue.component('book-view', BookView);
+Vue.component('datatable-action-button', DatatableActionButton);
 
 const app = new Vue({
     el: '#app',

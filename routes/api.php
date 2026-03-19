@@ -1,31 +1,13 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\AuthorController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
+Route::get('books/datatable', [BookController::class, 'datatable']);
+Route::get('books/count', [BookController::class, 'count']);
+Route::resource('/books', BookController::class)->except(['edit']);
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-Route::get('books/datatable', 'BookController@datatable');
-Route::get('books/count', 'BookController@count');
-Route::resource('/books', 'BookController', [
-  'except' => ['edit']
-]);
-
-Route::get('authors/datatable', 'AuthorController@datatable');
-Route::get('authors/count', 'AuthorController@count');
-Route::resource('/authors', 'AuthorController', [
-  'except' => ['edit']
-]);
+Route::get('authors/datatable', [AuthorController::class, 'datatable']);
+Route::get('authors/count', [AuthorController::class, 'count']);
+Route::resource('/authors', AuthorController::class)->except(['edit']);

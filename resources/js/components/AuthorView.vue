@@ -7,11 +7,11 @@
         <div class="card">
             <div class="card-header">
                 External Links
-            </div><!-- /card-header -->
+            </div>
             <div class="card-body">
                 <div v-if="author.open_library_ref"><a :href="'https://openlibrary.org/authors/'+author.open_library_ref" target="_blank">Open Library</a></div>
-            </div><!-- /card-body -->
-        </div><!-- /card -->
+            </div>
+        </div>
 
         <br>
 

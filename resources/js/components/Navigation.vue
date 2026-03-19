@@ -1,4 +1,4 @@
- <template>
+<template>
     <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -9,12 +9,9 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <!-- Left Side Of Navbar -->
                 <ul class="navbar-nav mr-auto">
-
                 </ul>
 
-                <!-- Right Side Of Navbar -->
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="#" v-on:click="setAppMode('index')">Home</a>
@@ -32,14 +29,13 @@
 </template>
 
 <script>
-
 export default {
     data() {
         return {}
     },
     methods: {
-        setAppMode : function(mode) {
-            this.$root.$refs.app.refreshGraph();	
+        setAppMode(mode) {
+            this.$root.$refs.app.refreshGraph();
             this.$root.$refs.app.mode = mode;
         },
     }

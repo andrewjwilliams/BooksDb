@@ -27,7 +27,6 @@
   }
   @media only screen and (min-width: 992px) {
     border-bottom: 1px solid transparent;
-    //background: transparent;
     .navbar-brand {
       padding: 10px 20px;
       color: $white;
@@ -53,7 +52,6 @@
     -webkit-transition: background-color 0.2s;
     -moz-transition: background-color 0.2s;
     transition: background-color 0.2s;
-    /* Force Hardware Acceleration in WebKit */
     -webkit-transform: translate3d(0, 0, 0);
     -moz-transform: translate3d(0, 0, 0);
     -ms-transform: translate3d(0, 0, 0);
@@ -61,7 +59,6 @@
     transform: translate3d(0, 0, 0);
     -webkit-backface-visibility: hidden;
     &.is-fixed {
-      /* when the user scrolls down, we hide the header right above the viewport */
       position: fixed;
       top: -67px;
       -webkit-transition: -webkit-transform 0.2s;
@@ -89,7 +86,6 @@
       }
     }
     &.is-visible {
-      /* if the user changes the scrolling direction, we show the header */
       -webkit-transform: translate3d(0, 100%, 0);
       -moz-transform: translate3d(0, 100%, 0);
       -ms-transform: translate3d(0, 100%, 0);
