@@ -42,6 +42,7 @@
         <br>
 
         <a href="#" v-on:click="closeView()" class="btn btn-info">Back to list</a>
+        <a :href="'/books/' + book.id + '/label'" target="_blank" class="btn btn-secondary"><font-awesome-icon :icon="['fas', 'print']"></font-awesome-icon> Print Label</a>
     </div>
 </template>
 

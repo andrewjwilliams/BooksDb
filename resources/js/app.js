@@ -10,13 +10,14 @@ import {
     faCheck,
     faPencilAlt,
     faPlus,
+    faPrint,
     faSearch,
     faTimes,
     faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-library.add(faCheck, faPencilAlt, faPlus, faSearch, faTimes, faTrash);
+library.add(faCheck, faPencilAlt, faPlus, faPrint, faSearch, faTimes, faTrash);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 

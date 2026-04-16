@@ -84,6 +84,21 @@ export default {
 									},
 								},
 								{
+									id: 'btnActionsPrintLabel',
+									name: '',
+									classes: {
+										'btn': true,
+										'btn-secondary': true,
+										'btn-sm': true,
+									},
+									event: "click",
+									handler: this.printLabel,
+									meta: {
+										icon: ['fas', 'print'],
+										title: "Print Label"
+									},
+								},
+								{
 									id: 'btnActionsDelete',
 									name: '',
 									classes: {
@@ -126,6 +141,9 @@ export default {
 
 			this.$root.$refs.app.clearAlert();
         },
+		printLabel(data) {
+			window.open('/books/' + data.id + '/label', '_blank');
+		},
 		async deleteBook(data) {
 			if (confirm(`Are you sure you want to delete ${data.name} ? `)) {
 				this.$root.$refs.app.setAlert('Delete book', 'loading');
