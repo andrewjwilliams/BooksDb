@@ -2,6 +2,18 @@
 
 A sample single page application to record books and authors, devloped in Laravel and Vue.js
 
+## Configuration
+
+In addition to the standard Laravel `.env` variables, this app uses:
+
+- `LIBRARY_NAME` — printed in small text at the top of each book's barcode label (`/books/{id}/label`). Falls back to `APP_NAME` when unset. The site domain shown next to it is derived from `APP_URL`.
+
+## Printing barcode labels
+
+Each book has a printable label at `GET /books/{id}/label`. The label contains a Code 128 barcode of the book's numeric ID, the library name + domain, the Dewey classification (printed vertically), and the book title + author. The page is sized for 51 × 19 mm library barcode stock via `@page` CSS; override `--label-w` / `--label-h` in `resources/views/labels/book.blade.php` for other sizes.
+
+Buttons on the book list (datatable) and book detail view open the label page in a new tab; a "Print" button in the page triggers the browser print dialog.
+
 ## Deployment
 
 The app is designed to run via `docker-compose`. The `Dockerfile` is multi-stage and builds the frontend assets (Vite), PHP vendor directory (Composer), and runtime images inside Docker — nothing needs to be pre-built before deploying.
