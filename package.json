@@ -17,6 +17,7 @@
         "@fortawesome/vue-fontawesome": "^0.1.10",
         "axios": "^1.15",
         "bootstrap": "^4.6.2",
+        "html5-qrcode": "^2.3.8",
         "jquery": "^3.7",
         "jsbarcode": "^3.12.3",
         "laravel-vue-datatable": "^0.5.12",
