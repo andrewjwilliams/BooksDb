@@ -15,7 +15,19 @@
 					<div class="input-group mb-3">
 						<input type="text" v-model="book.isbn" name="isbn" id="isbn" ref="isbn" v-bind:class="{'form-control':true, 'is-invalid':book.isbn && !validIsbn(book.isbn), 'is-valid' : validIsbn(book.isbn)}" placeholder="ISBN" aria-label="ISBN">
 						<div class="input-group-append">
+							<button v-if="scannerSupported" id="btn_scan_isbn" v-on:click="openScanner()" class="btn btn-secondary" type="button" title="Scan with camera"><font-awesome-icon :icon="['fas', 'camera']"></font-awesome-icon> Scan</button>
 							<button id="btn_isdn" v-on:click="getByIsbn()" class="btn btn-info" type="button" :disabled=!validIsbn(book.isbn)>Lookup</button>
+						</div>
+					</div>
+
+					<div v-if="scannerOpen" class="isbn-scanner">
+						<div class="isbn-scanner__backdrop" v-on:click="closeScanner()"></div>
+						<div class="isbn-scanner__panel">
+							<h4>Scan ISBN barcode</h4>
+							<div id="isbn-scanner-stream" class="isbn-scanner__video"></div>
+							<p v-if="scannerError" class="text-danger mb-2">{{ scannerError }}</p>
+							<p v-else-if="scannerHint" class="text-muted mb-2">{{ scannerHint }}</p>
+							<button type="button" v-on:click="closeScanner()" class="btn btn-danger">Cancel</button>
 						</div>
 					</div>
 
@@ -183,6 +195,38 @@
     </form>
 </template>
 
+<style scoped>
+.isbn-scanner {
+	position: fixed;
+	inset: 0;
+	z-index: 1050;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.isbn-scanner__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.6);
+}
+.isbn-scanner__panel {
+	position: relative;
+	background: #fff;
+	padding: 1rem;
+	border-radius: 0.5rem;
+	max-width: 95vw;
+	width: 480px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.isbn-scanner__video {
+	width: 100%;
+	max-height: 60vh;
+	background: #000;
+	border-radius: 0.25rem;
+	margin-bottom: 0.5rem;
+}
+</style>
+
 <script>
 	import DatatableActionButton from './DatatableActionButton.vue';
 
@@ -191,6 +235,11 @@
 			return {
 				author: {},
 				authorSelector : false,
+				scannerSupported: false,
+				scannerOpen: false,
+				scannerError: null,
+				scannerHint: 'Point your camera at the barcode on the back of the book.',
+				scannerControls: null,
 				authorsDt: {
 					perPage: ['10', '25', '50'],
 					columns: [
@@ -228,6 +277,8 @@
 
 			window.scrollTo(0,0);
 
+			this.scannerSupported = !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
+
 			if (this.book.author_id) {
 				axios.get('/api/authors/' + this.book.author_id).then(function (response) {
 					self.author = response.data;
@@ -237,11 +288,91 @@
 				});
 			}
 		},
+		beforeDestroy() {
+			this.closeScanner();
+		},
 
 		methods: {
 			validIsbn(i) {
 				if (i == null) return false;
 				return isValidIsbn(i);
+			},
+			async openScanner() {
+				this.scannerOpen = true;
+				this.scannerError = null;
+				this.scannerHint = 'Point your camera at the barcode on the back of the book.';
+				await this.$nextTick();
+
+				try {
+					const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
+					const self = this;
+					const scanner = new Html5Qrcode('isbn-scanner-stream', { verbose: false });
+					this.scannerControls = scanner;
+					var tickCount = 0;
+
+					await scanner.start(
+						{ facingMode: 'environment' },
+						{
+							fps: 15,
+							qrbox: function (vw, vh) {
+								var w = Math.floor(vw * 0.9);
+								var h = Math.floor(Math.min(vh * 0.5, 200));
+								return { width: w, height: h };
+							},
+							videoConstraints: {
+								facingMode: { ideal: 'environment' },
+								width: { ideal: 1920 },
+								height: { ideal: 1080 },
+								advanced: [{ focusMode: 'continuous' }],
+							},
+							formatsToSupport: [
+								Html5QrcodeSupportedFormats.EAN_13,
+								Html5QrcodeSupportedFormats.EAN_8,
+								Html5QrcodeSupportedFormats.UPC_A,
+								Html5QrcodeSupportedFormats.UPC_E,
+							],
+							experimentalFeatures: {
+								useBarCodeDetectorIfSupported: true,
+							},
+						},
+						function (decodedText) {
+							console.log('scanner decode: ' + decodedText);
+							var cleaned = decodedText.replace(/[^0-9Xx]/g, '');
+							if (isValidIsbn(cleaned)) {
+								self.book.isbn = cleaned;
+								self.closeScanner();
+							} else {
+								self.scannerHint = 'Read "' + cleaned + '" but it is not a valid ISBN — keep trying.';
+							}
+						},
+						function (errorMessage) {
+							tickCount++;
+							if (tickCount % 30 === 0) {
+								console.log('scanner tick ' + tickCount + ': ' + errorMessage);
+							}
+						}
+					);
+
+					console.log('scanner started via html5-qrcode');
+					try {
+						var track = scanner.getRunningTrackSettings ? scanner.getRunningTrackSettings() : null;
+						console.log('scanner video settings: ' + JSON.stringify(track));
+					} catch (e) { /* ignore */ }
+				} catch (err) {
+					console.log('scanner start: ' + err);
+					this.scannerError = (err && err.message) ? err.message : 'Unable to access the camera.';
+				}
+			},
+			closeScanner() {
+				var scanner = this.scannerControls;
+				this.scannerControls = null;
+				this.scannerOpen = false;
+				this.scannerError = null;
+
+				if (scanner) {
+					var cleanup = function () { try { scanner.clear(); } catch (e) { /* ignore */ } };
+					scanner.stop().then(cleanup).catch(cleanup);
+				}
 			},
 			getByIsbn() {
 				var root = this.$root.$refs.app;
@@ -394,19 +525,34 @@
 	}
 
 	function lookupIsbn(callback, value) {
+		lookupIsbnOnce(value, function (result) {
+			if (result) {
+				callback(result);
+				return;
+			}
+
+			var alt = alternateIsbnForm(value);
+			if (!alt) {
+				callback(false);
+				return;
+			}
+
+			console.log('lookupIsbn: retrying with ' + alt);
+			lookupIsbnOnce(alt, callback);
+		});
+	}
+
+	function lookupIsbnOnce(value, callback) {
 		$.ajax({
 			type: 'get',
 			url: 'https://openlibrary.org/api/books.json?bibkeys=ISBN:' + value + '&jscmd=data',
 			data: {},
 			success: function (response) {
-				var r;
-
 				if (typeof response['ISBN:' + value] !== 'undefined') {
-					r = response['ISBN:' + value];
+					callback(response['ISBN:' + value]);
 				} else {
-					r = false;
+					callback(false);
 				}
-				callback(r);
 			},
 			error: function (xhr, status, error) {
 				console.log('lookupIsbn: ' + status);
@@ -414,6 +560,37 @@
 				callback(false);
 			}
 		});
+	}
+
+	function alternateIsbnForm(value) {
+		var clean = String(value).replace(/[^0-9Xx]/g, '').toUpperCase();
+		if (clean.length === 13 && clean.slice(0, 3) === '978') {
+			return isbn13to10(clean);
+		}
+		if (clean.length === 10) {
+			return isbn10to13(clean);
+		}
+		return null;
+	}
+
+	function isbn13to10(isbn13) {
+		var core = isbn13.slice(3, 12);
+		var sum = 0;
+		for (var i = 0; i < 9; i++) sum += parseInt(core.charAt(i), 10) * (10 - i);
+		var check = 11 - (sum % 11);
+		var checkChar = check === 10 ? 'X' : (check === 11 ? '0' : String(check));
+		return core + checkChar;
+	}
+
+	function isbn10to13(isbn10) {
+		var core = '978' + isbn10.slice(0, 9);
+		var sum = 0;
+		for (var i = 0; i < 12; i++) {
+			var d = parseInt(core.charAt(i), 10);
+			sum += (i % 2 === 0) ? d : d * 3;
+		}
+		var check = (10 - (sum % 10)) % 10;
+		return core + String(check);
 	}
 
 	var isValidIsbn = function(str) {
