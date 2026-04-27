@@ -10,13 +10,13 @@ function render() {
 
     JsBarcode(svg, String(bookId), {
         format: 'CODE128',
-        displayValue: true,
-        fontSize: 10,
-        textMargin: 0,
+        displayValue: false,
         margin: 0,
-        height: 40,
+        height: 30,
         width: 1.2,
     });
+
+    svg.setAttribute('preserveAspectRatio', 'none');
 }
 
 if (document.readyState === 'loading') {
