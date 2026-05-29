@@ -20,5 +20,13 @@ services:
     depends_on:
       - app
 
+  printer:
+    build:
+      context: ./sidecar
+    container_name: booksdb_printer
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+
 volumes:
   app_storage:

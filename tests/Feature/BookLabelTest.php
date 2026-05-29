@@ -67,8 +67,7 @@ class BookLabelTest extends TestCase
 
         $this->get("/books/{$book->id}/label")
             ->assertStatus(200)
-            ->assertDontSee('class="label__dewey"', false)
-            ->assertSee('label__main no-dewey', false);
+            ->assertDontSee('class="side-dewey"', false);
     }
 
     private function makeBook(array $attrs = [], string $authorName = 'Test Author'): Book

@@ -25,12 +25,17 @@ FROM php:8.4-fpm-alpine AS app
 RUN apk add --no-cache \
         libzip-dev \
         oniguruma-dev \
+        libpng-dev \
+        jpeg-dev \
+        freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo \
         pdo_mysql \
         mbstring \
         zip \
-        opcache
+        opcache \
+        gd
 RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.memory_consumption=128" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini

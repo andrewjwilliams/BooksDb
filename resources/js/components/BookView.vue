@@ -1,5 +1,7 @@
 <template>
     <div id="book-view">
+        <img v-if="coverUrl && !coverFailed" :src="coverUrl" @error="coverFailed = true" :alt="'Cover of ' + book.title" class="book-cover">
+
         <h2>{{ book.title }} </h2>
 
         <h3>{{ author.name }}</h3>
@@ -50,7 +52,22 @@
 	export default {
 		data() {
 			return {
-                author: {}
+                author: {},
+                coverFailed: false
+            }
+        },
+        computed: {
+            coverUrl() {
+                var isbn = this.book.isbn_13 || this.book.isbn || this.book.isbn_10;
+                if (!isbn) return null;
+                var cleaned = String(isbn).replace(/[^0-9Xx]/g, '');
+                if (!cleaned) return null;
+                return 'https://covers.openlibrary.org/b/isbn/' + cleaned + '-M.jpg?default=false';
+            }
+        },
+        watch: {
+            'book.id': function () {
+                this.coverFailed = false;
             }
         },
         mounted() {
@@ -76,3 +93,14 @@
         props: ['book']
     }
 </script>
+
+<style scoped>
+.book-cover {
+    float: right;
+    max-width: 200px;
+    max-height: 300px;
+    margin: 0 0 1rem 1rem;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+</style>

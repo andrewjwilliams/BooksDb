@@ -5,8 +5,8 @@
     <title>Label: {{ $book->title }}</title>
     <style>
         :root {
-            --label-w: 51mm;
-            --label-h: 19mm;
+            --label-w: 62mm;
+            --label-h: 29mm;
             --label-pad: 1mm;
             --side-w: 5mm;
         }
@@ -37,6 +37,35 @@
             cursor: pointer;
         }
 
+        .toolbar button.btn-primary {
+            background: #1f6feb;
+            color: #fff;
+            border: 1px solid #1f6feb;
+            border-radius: 0.25rem;
+            font-weight: bold;
+        }
+
+        .toolbar button.btn-primary:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .toolbar .link-secondary {
+            font-size: 0.9rem;
+            color: #555;
+            text-decoration: underline;
+            align-self: center;
+        }
+
+        .toolbar #print-status {
+            align-self: center;
+            font-size: 0.95rem;
+            min-width: 8rem;
+        }
+        .toolbar #print-status.ok    { color: #1a7f37; }
+        .toolbar #print-status.err   { color: #c00; }
+        .toolbar #print-status.busy  { color: #555; }
+
         .label {
             box-sizing: border-box;
             width: var(--label-w);
@@ -45,7 +74,7 @@
             background: #fff;
             color: #000;
             display: grid;
-            grid-template-rows: 2.5mm 1fr 4.5mm;
+            grid-template-rows: 4mm 1fr 4.5mm;
             grid-template-columns: minmax(0, 1fr) var(--side-w);
             grid-template-areas:
                 "top    side"
@@ -66,11 +95,12 @@
 
         .label__top {
             display: flex;
-            justify-content: space-between;
-            align-items: baseline;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
             font-size: 5pt;
             line-height: 1;
-            gap: 2mm;
+          gap: 0.3mm;
         }
 
         .label__top .library { font-weight: bold; }
@@ -106,11 +136,10 @@
         }
 
         .label__side {
-            display: grid;
-            grid-template-rows: 1fr 1fr;
-            row-gap: 0.5mm;
-            justify-items: center;
-            align-items: start;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
             height: 100%;
             overflow: hidden;
         }
@@ -118,13 +147,24 @@
         .label__side > div {
             writing-mode: vertical-rl;
             text-orientation: mixed;
-            font-size: 4pt;
             font-weight: bold;
             line-height: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-height: 100%;
+        }
+
+        .label__side span.label__side_title {
+            font-size: 3.2pt;
+        }
+
+        .label__side .side-id {
+            font-size: 4pt;
+        }
+
+        .label__side .side-dewey {
+            font-size: 4pt;
         }
 
         .label__bottom {
@@ -148,7 +188,7 @@
 
         @media print {
             @page {
-                size: var(--label-w) var(--label-h);
+                size: 62mm 29mm landscape;
                 margin: 0;
             }
 
@@ -171,8 +211,10 @@
 </head>
 <body>
     <div class="toolbar">
-        <button type="button" onclick="window.print()">Print</button>
+        <button type="button" id="btn-print-network" data-print-url="/books/{{ $book->id }}/print" class="btn-primary">Print to Printer</button>
         <button type="button" onclick="window.close()">Close</button>
+        <a href="#" id="btn-print-browser" onclick="window.print(); return false;" class="link-secondary">Print via browser…</a>
+        <span id="print-status" role="status" aria-live="polite"></span>
     </div>
 
     <div class="label" data-book-id="{{ $book->id }}">
@@ -193,9 +235,9 @@
         </div>
 
         <div class="label__side">
-            <div class="side-id">ID: {{ $book->id }}</div>
+            <div class="side-id"><span class="label__side_title">ID:</span> {{ $book->id }}</div>
             @if ($book->dewey_classification)
-                <div class="side-dewey">Dewey: {{ $book->dewey_classification }}</div>
+                <div class="side-dewey"><span class="label__side_title">DDC:</span> {{ $book->dewey_classification }}</div>
             @endif
         </div>
     </div>

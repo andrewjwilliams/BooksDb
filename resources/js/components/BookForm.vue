@@ -398,6 +398,10 @@
 							self.book.publisher = '';
 						}
 
+						if (bookObj.description) {
+							self.book.description = bookObj.description;
+						}
+
 						if (typeof bookObj.identifiers !== 'undefined') {
 							$.each(bookObj.identifiers, function(k, v) {
 								self.book[k] = v.join();
@@ -527,18 +531,105 @@
 	function lookupIsbn(callback, value) {
 		lookupIsbnOnce(value, function (result) {
 			if (result) {
-				callback(result);
+				enrichBook(result, value, callback);
 				return;
 			}
 
 			var alt = alternateIsbnForm(value);
 			if (!alt) {
-				callback(false);
+				lookupGoogleBooks(value, function (gb) { callback(gb || false); });
 				return;
 			}
 
 			console.log('lookupIsbn: retrying with ' + alt);
-			lookupIsbnOnce(alt, callback);
+			lookupIsbnOnce(alt, function (altResult) {
+				if (altResult) {
+					enrichBook(altResult, value, callback);
+				} else {
+					lookupGoogleBooks(value, function (gb) { callback(gb || false); });
+				}
+			});
+		});
+	}
+
+	function enrichBook(book, isbn, callback) {
+		var afterWorks = function () {
+			var needsMore = !book.description
+				|| !book.publishers
+				|| !book.identifiers
+				|| !book.identifiers.isbn_10
+				|| !book.identifiers.isbn_13;
+
+			if (!needsMore) {
+				callback(book);
+				return;
+			}
+
+			lookupGoogleBooks(isbn, function (gb) {
+				if (gb) {
+					if (!book.description && gb.description) book.description = gb.description;
+					if (!book.publishers && gb.publishers) book.publishers = gb.publishers;
+					if (gb.identifiers) {
+						book.identifiers = book.identifiers || {};
+						$.each(gb.identifiers, function (k, v) {
+							if (!book.identifiers[k]) book.identifiers[k] = v;
+						});
+					}
+				}
+				callback(book);
+			});
+		};
+
+		if (book.works && book.works[0] && book.works[0].key) {
+			$.ajax({
+				type: 'get',
+				url: 'https://openlibrary.org' + book.works[0].key + '.json',
+				success: function (works) {
+					if (!book.description) {
+						if (typeof works.description === 'string') {
+							book.description = works.description;
+						} else if (works.description && works.description.value) {
+							book.description = works.description.value;
+						}
+					}
+					afterWorks();
+				},
+				error: function () { afterWorks(); }
+			});
+		} else {
+			afterWorks();
+		}
+	}
+
+	function lookupGoogleBooks(isbn, callback) {
+		$.ajax({
+			type: 'get',
+			url: 'https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn,
+			success: function (response) {
+				if (!response.items || response.items.length === 0) {
+					callback(null);
+					return;
+				}
+				var v = response.items[0].volumeInfo || {};
+				var converted = {
+					title: v.title,
+					authors: (v.authors || []).map(function (n) { return { name: n }; }),
+					description: v.description || null,
+					identifiers: {}
+				};
+				if (v.publisher) converted.publishers = [v.publisher];
+				if (v.industryIdentifiers) {
+					v.industryIdentifiers.forEach(function (id) {
+						if (id.type === 'ISBN_10') converted.identifiers.isbn_10 = [id.identifier];
+						if (id.type === 'ISBN_13') converted.identifiers.isbn_13 = [id.identifier];
+					});
+				}
+				callback(converted);
+			},
+			error: function (xhr, status, error) {
+				console.log('lookupGoogleBooks: ' + status + ' ' + error);
+				callback(null);
+			}
 		});
 	}
 
