@@ -393,7 +393,7 @@
 						}
 
 						if (typeof bookObj.publishers !== 'undefined') {
-							self.book.publisher = bookObj.publishers.join();
+							self.book.publisher = bookObj.publishers[0].join();
 						} else {
 							self.book.publisher = '';
 						}
@@ -469,7 +469,8 @@
 					if (this.$parent.mode == 'edit') {
 						axios.put('/api/books/'+id, formFields).then(response => {
 							root.setAlert('Saved record', 'success');
-							parent.mode = 'index';
+							parent.book = response.data;
+							parent.mode = 'view';
 						}).catch(error => {
 							root.setAlert('Unable to save record', 'danger');
 							console.log(error);
@@ -477,7 +478,8 @@
 					} else {
 						axios.post('/api/books', formFields).then(function (response) {
 							root.setAlert('Created new book record', 'success');
-							parent.mode = 'index';
+							parent.book = response.data;
+							parent.mode = 'view';
 						}, function (error) {
 							root.setAlert('Unable to save record', 'danger');
 							console.log(error);

@@ -63,7 +63,7 @@ class BookController extends Controller
 
         $book->save();
 
-        return response(null, Response::HTTP_OK);
+        return response($book->jsonSerialize(), Response::HTTP_OK);
     }
 
     public function destroy($id)

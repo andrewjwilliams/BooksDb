@@ -7,8 +7,12 @@
         <h3>{{ author.name }}</h3>
 
         {{ book.description }}
+		
+		<p>
 
         <div v-if="book.publisher">Publisher: {{ book.publisher }}</div>
+		
+		<p>
 
         <div class="card">
             <div class="card-header">
@@ -23,7 +27,7 @@
             </div>
         </div>
 
-        <br>
+        <p>
 
         <div class="card">
             <div class="card-header">
