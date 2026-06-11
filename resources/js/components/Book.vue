@@ -178,7 +178,11 @@ export default {
 				oclc: null,
 				librarything: null,
 				project_gutenberg: null,
-				goodreads: null
+				goodreads: null,
+				publish_year: null,
+				page_count: null,
+				language: null,
+				subjects: [],
 			};
 		}
     },

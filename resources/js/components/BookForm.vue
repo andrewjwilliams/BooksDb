@@ -81,6 +81,46 @@
 				</div>
 			</div>
 
+			<div class="col-xs-12 col-sm-4 col-md-4">
+				<div class="form-group">
+					<label for="publish_year">Year Published</label>
+					<input type="number" v-model="book.publish_year" name="publish_year" id="publish_year" class="form-control" placeholder="Year" min="1000" max="2100">
+				</div>
+			</div>
+
+			<div class="col-xs-12 col-sm-4 col-md-4">
+				<div class="form-group">
+					<label for="page_count">Pages</label>
+					<input type="number" v-model="book.page_count" name="page_count" id="page_count" class="form-control" placeholder="Page count" min="1">
+				</div>
+			</div>
+
+			<div class="col-xs-12 col-sm-4 col-md-4">
+				<div class="form-group">
+					<label for="language">Language</label>
+					<input type="text" v-model="book.language" name="language" id="language" class="form-control" placeholder="e.g. en" maxlength="10">
+				</div>
+			</div>
+
+			<div class="col-xs-12 col-sm-12 col-md-12">
+				<div class="form-group">
+					<label>Subjects</label>
+					<div class="subject-tags mb-2">
+						<span v-for="(subject, idx) in bookSubjects" :key="idx" class="badge badge-secondary subject-tag">
+							{{ subject.name }}
+							<button type="button" class="subject-tag__remove" @click="removeSubject(idx)" aria-label="Remove">&times;</button>
+						</span>
+						<span v-if="bookSubjects.length === 0" class="text-muted">No subjects</span>
+					</div>
+					<div class="input-group">
+						<input type="text" v-model="newSubject" class="form-control" placeholder="Add subject…" @keydown.enter.prevent="addSubject">
+						<div class="input-group-append">
+							<button type="button" class="btn btn-outline-secondary" @click="addSubject">Add</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<div class="col-xs-12 col-sm-12 col-md-12">
                 <div class="form-group">
 					<fieldset>
@@ -225,10 +265,37 @@
 	border-radius: 0.25rem;
 	margin-bottom: 0.5rem;
 }
+.subject-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	min-height: 2rem;
+}
+.subject-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	font-size: 0.85rem;
+	padding: 0.3rem 0.5rem;
+}
+.subject-tag__remove {
+	background: none;
+	border: none;
+	padding: 0;
+	line-height: 1;
+	cursor: pointer;
+	color: inherit;
+	opacity: 0.7;
+	font-size: 1rem;
+}
+.subject-tag__remove:hover {
+	opacity: 1;
+}
 </style>
 
 <script>
 	import DatatableActionButton from './DatatableActionButton.vue';
+	import { lookupIsbn, isValidIsbn } from '../isbnLookup.js';
 
 	export default {
 		data() {
@@ -240,6 +307,7 @@
 				scannerError: null,
 				scannerHint: 'Point your camera at the barcode on the back of the book.',
 				scannerControls: null,
+				newSubject: '',
 				authorsDt: {
 					perPage: ['10', '25', '50'],
 					columns: [
@@ -292,7 +360,32 @@
 			this.closeScanner();
 		},
 
+		computed: {
+			bookSubjects() {
+				var subjects = this.book.subjects;
+				if (!subjects || subjects.length === 0) return [];
+				return subjects.map(function (s) {
+					return typeof s === 'string' ? { name: s } : s;
+				});
+			}
+		},
+
 		methods: {
+			addSubject() {
+				var name = this.newSubject.trim();
+				if (!name) return;
+				var exists = this.bookSubjects.some(function (s) {
+					return s.name.toLowerCase() === name.toLowerCase();
+				});
+				if (!exists) {
+					if (!this.book.subjects) this.book.subjects = [];
+					this.book.subjects.push({ name: name });
+				}
+				this.newSubject = '';
+			},
+			removeSubject(idx) {
+				this.book.subjects.splice(idx, 1);
+			},
 			validIsbn(i) {
 				if (i == null) return false;
 				return isValidIsbn(i);
@@ -392,14 +485,38 @@
 							self.book.lc_classification = null;
 						}
 
-						if (typeof bookObj.publishers !== 'undefined') {
-							self.book.publisher = bookObj.publishers[0].join();
+						if (bookObj.publishers && bookObj.publishers.length > 0) {
+							var pub = bookObj.publishers[0];
+							self.book.publisher = typeof pub === 'object' ? pub.name : pub;
 						} else {
 							self.book.publisher = '';
 						}
 
 						if (bookObj.description) {
 							self.book.description = bookObj.description;
+						}
+
+						// publish_year: prefer already-normalised value (from GB path), fall back to OL's publish_date string
+						if (bookObj.publish_year) {
+							self.book.publish_year = bookObj.publish_year;
+						} else if (bookObj.publish_date) {
+							var yearMatch = String(bookObj.publish_date).match(/(\d{4})/);
+							if (yearMatch) self.book.publish_year = parseInt(yearMatch[1], 10);
+						}
+
+						// page_count: prefer normalised value (from GB path), fall back to OL's number_of_pages
+						if (bookObj.page_count) {
+							self.book.page_count = bookObj.page_count;
+						} else if (bookObj.number_of_pages) {
+							self.book.page_count = bookObj.number_of_pages;
+						}
+
+						if (bookObj.language) {
+							self.book.language = bookObj.language;
+						}
+
+						if (bookObj.subjects_list && bookObj.subjects_list.length > 0) {
+							self.book.subjects = bookObj.subjects_list.map(function (s) { return { name: s }; });
 						}
 
 						if (typeof bookObj.identifiers !== 'undefined') {
@@ -466,6 +583,9 @@
 					delete formFields.created_at;
 					delete formFields.updated_at;
 
+					// Send subjects as plain name strings; server does find-or-create
+					formFields.subjects = this.bookSubjects.map(function (s) { return s.name; });
+
 					if (this.$parent.mode == 'edit') {
 						axios.put('/api/books/'+id, formFields).then(response => {
 							root.setAlert('Saved record', 'success');
@@ -530,198 +650,5 @@
 		props: ['book']
 	}
 
-	function lookupIsbn(callback, value) {
-		lookupIsbnOnce(value, function (result) {
-			if (result) {
-				enrichBook(result, value, callback);
-				return;
-			}
 
-			var alt = alternateIsbnForm(value);
-			if (!alt) {
-				lookupGoogleBooks(value, function (gb) { callback(gb || false); });
-				return;
-			}
-
-			console.log('lookupIsbn: retrying with ' + alt);
-			lookupIsbnOnce(alt, function (altResult) {
-				if (altResult) {
-					enrichBook(altResult, value, callback);
-				} else {
-					lookupGoogleBooks(value, function (gb) { callback(gb || false); });
-				}
-			});
-		});
-	}
-
-	function enrichBook(book, isbn, callback) {
-		var afterWorks = function () {
-			var needsMore = !book.description
-				|| !book.publishers
-				|| !book.identifiers
-				|| !book.identifiers.isbn_10
-				|| !book.identifiers.isbn_13;
-
-			if (!needsMore) {
-				callback(book);
-				return;
-			}
-
-			lookupGoogleBooks(isbn, function (gb) {
-				if (gb) {
-					if (!book.description && gb.description) book.description = gb.description;
-					if (!book.publishers && gb.publishers) book.publishers = gb.publishers;
-					if (gb.identifiers) {
-						book.identifiers = book.identifiers || {};
-						$.each(gb.identifiers, function (k, v) {
-							if (!book.identifiers[k]) book.identifiers[k] = v;
-						});
-					}
-				}
-				callback(book);
-			});
-		};
-
-		if (book.works && book.works[0] && book.works[0].key) {
-			$.ajax({
-				type: 'get',
-				url: 'https://openlibrary.org' + book.works[0].key + '.json',
-				success: function (works) {
-					if (!book.description) {
-						if (typeof works.description === 'string') {
-							book.description = works.description;
-						} else if (works.description && works.description.value) {
-							book.description = works.description.value;
-						}
-					}
-					afterWorks();
-				},
-				error: function () { afterWorks(); }
-			});
-		} else {
-			afterWorks();
-		}
-	}
-
-	function lookupGoogleBooks(isbn, callback) {
-		$.ajax({
-			type: 'get',
-			url: 'https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn,
-			success: function (response) {
-				if (!response.items || response.items.length === 0) {
-					callback(null);
-					return;
-				}
-				var v = response.items[0].volumeInfo || {};
-				var converted = {
-					title: v.title,
-					authors: (v.authors || []).map(function (n) { return { name: n }; }),
-					description: v.description || null,
-					identifiers: {}
-				};
-				if (v.publisher) converted.publishers = [v.publisher];
-				if (v.industryIdentifiers) {
-					v.industryIdentifiers.forEach(function (id) {
-						if (id.type === 'ISBN_10') converted.identifiers.isbn_10 = [id.identifier];
-						if (id.type === 'ISBN_13') converted.identifiers.isbn_13 = [id.identifier];
-					});
-				}
-				callback(converted);
-			},
-			error: function (xhr, status, error) {
-				console.log('lookupGoogleBooks: ' + status + ' ' + error);
-				callback(null);
-			}
-		});
-	}
-
-	function lookupIsbnOnce(value, callback) {
-		$.ajax({
-			type: 'get',
-			url: 'https://openlibrary.org/api/books.json?bibkeys=ISBN:' + value + '&jscmd=data',
-			data: {},
-			success: function (response) {
-				if (typeof response['ISBN:' + value] !== 'undefined') {
-					callback(response['ISBN:' + value]);
-				} else {
-					callback(false);
-				}
-			},
-			error: function (xhr, status, error) {
-				console.log('lookupIsbn: ' + status);
-				console.log('lookupIsbn: ' + error);
-				callback(false);
-			}
-		});
-	}
-
-	function alternateIsbnForm(value) {
-		var clean = String(value).replace(/[^0-9Xx]/g, '').toUpperCase();
-		if (clean.length === 13 && clean.slice(0, 3) === '978') {
-			return isbn13to10(clean);
-		}
-		if (clean.length === 10) {
-			return isbn10to13(clean);
-		}
-		return null;
-	}
-
-	function isbn13to10(isbn13) {
-		var core = isbn13.slice(3, 12);
-		var sum = 0;
-		for (var i = 0; i < 9; i++) sum += parseInt(core.charAt(i), 10) * (10 - i);
-		var check = 11 - (sum % 11);
-		var checkChar = check === 10 ? 'X' : (check === 11 ? '0' : String(check));
-		return core + checkChar;
-	}
-
-	function isbn10to13(isbn10) {
-		var core = '978' + isbn10.slice(0, 9);
-		var sum = 0;
-		for (var i = 0; i < 12; i++) {
-			var d = parseInt(core.charAt(i), 10);
-			sum += (i % 2 === 0) ? d : d * 3;
-		}
-		var check = (10 - (sum % 10)) % 10;
-		return core + String(check);
-	}
-
-	var isValidIsbn = function(str) {
-		var sum, weight, digit, check, i;
-
-		str = str.replace(/[^0-9X]/gi, '');
-
-		if (str.length != 10 && str.length != 13) {
-			return false;
-		}
-
-		if (str.length == 13) {
-			sum = 0;
-			for (i = 0; i < 12; i++) {
-				digit = parseInt(str[i]);
-				if (i % 2 == 1) {
-					sum += 3*digit;
-				} else {
-					sum += digit;
-				}
-			}
-			check = (10 - (sum % 10)) % 10;
-			return (check == str[str.length-1]);
-		}
-
-		if (str.length == 10) {
-			weight = 10;
-			sum = 0;
-			for (i = 0; i < 9; i++) {
-				digit = parseInt(str[i]);
-				sum += weight*digit;
-				weight--;
-			}
-			check = 11 - (sum % 11);
-			if (check == 10) {
-				check = 'X';
-			}
-			return (check == str[str.length-1].toUpperCase());
-		}
-	}
 </script>

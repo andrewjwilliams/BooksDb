@@ -15,10 +15,16 @@ class Book extends Model
         'openlibrary', 'google', 'lccn', 'isbn_13',
         'amazon', 'isbn_10', 'oclc', 'librarything',
         'project_gutenberg', 'goodreads',
+        'publish_year', 'page_count', 'language',
     ];
 
     public function author()
     {
         return $this->belongsTo(Author::class);
+    }
+
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class);
     }
 }

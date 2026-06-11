@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Book;
+use App\Models\Subject;
 use JamesDordoy\LaravelVueDatatable\Http\Resources\DataTableCollectionResource;
 
 class BookController extends Controller
@@ -34,47 +35,67 @@ class BookController extends Controller
     public function store(Request $request)
     {
         $book = new Book;
+        $subjects = $request->input('subjects', []);
 
         foreach ($request->input() as $k => $v) {
-            if (isset($v)) {
+            if ($k !== 'subjects' && isset($v)) {
                 $book->$k = $v;
             }
         }
 
-        if ($book->save()) {
-            return response($book->jsonSerialize(), Response::HTTP_OK);
-        }
+        $book->save();
+        $this->syncSubjects($book, $subjects);
+
+        $book->load('subjects');
+        return response($book->toArray(), Response::HTTP_OK);
     }
 
     public function show($id)
     {
-        return response(Book::find($id)->jsonSerialize(), Response::HTTP_OK);
+        return response(Book::with('subjects')->find($id)->toArray(), Response::HTTP_OK);
     }
 
     public function update(Request $request, $id)
     {
         $book = Book::findOrFail($id);
+        $subjects = $request->input('subjects', null);
 
         foreach ($request->input() as $k => $v) {
-            if (isset($v)) {
+            if ($k !== 'subjects' && isset($v)) {
                 $book->$k = $v;
             }
         }
 
         $book->save();
 
-        return response($book->jsonSerialize(), Response::HTTP_OK);
+        if ($subjects !== null) {
+            $this->syncSubjects($book, $subjects);
+        }
+
+        $book->load('subjects');
+        return response($book->toArray(), Response::HTTP_OK);
     }
 
     public function destroy($id)
     {
         Book::destroy($id);
-
         return response(null, Response::HTTP_OK);
     }
 
     public function count()
     {
         return response(['count' => Book::all()->count()], Response::HTTP_OK);
+    }
+
+    private function syncSubjects(Book $book, array $names): void
+    {
+        $ids = [];
+        foreach ($names as $name) {
+            $name = trim($name);
+            if ($name === '') continue;
+            $subject = Subject::firstOrCreate(['name' => $name]);
+            $ids[] = $subject->id;
+        }
+        $book->subjects()->sync($ids);
     }
 }
