@@ -28,6 +28,36 @@
 							<p>
 								Welcome to BooksDb. Please make your choice from the menu above.
 							</p>
+							
+							<div class="row">
+								<div class="col-md-6 mb-3">
+									<div class="card h-100">
+										<div class="card-body d-flex justify-content-between align-items-center">
+											<div>
+												<h5 class="card-title"><font-awesome-icon :icon="['fas', 'book']"></font-awesome-icon> Books</h5>
+												<span class="badge bg-secondary fs-5">{{ num.books }}</span>
+											</div>
+											<div class="d-flex flex-column gap-2">
+												<a href="#" class="btn btn-sm btn-outline-primary" v-on:click="mode = 'book'"><font-awesome-icon :icon="['fas', 'list']"></font-awesome-icon> List</a>
+												<a href="#" class="btn btn-sm btn-outline-success" v-on:click="addBook"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add</a>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-6 mb-3">
+									<div class="card h-100">
+										<div class="card-body d-flex justify-content-between align-items-center">
+											<div>
+												<h5 class="card-title"><font-awesome-icon :icon="['fas', 'user']"></font-awesome-icon> Authors</h5>
+												<span class="badge bg-secondary fs-5">{{ num.authors }}</span>
+											</div>
+											<div class="d-flex flex-column gap-2">
+												<a href="#" class="btn btn-sm btn-outline-primary" v-on:click="mode = 'author'"><font-awesome-icon :icon="['fas', 'list']"></font-awesome-icon> List</a>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
 
 							<GChart
 								type="BarChart"
@@ -35,12 +65,12 @@
 								:options="chartOptions"
 							/>
 						</div>
-						<book v-if="mode=='book'"></book>
+						<book v-if="mode=='book'" ref="book"></book>
 						<author v-if="mode=='author'"></author>
 					</div>
 				</div>
 			</div>
-        </main>
+    </main>
 	</div>
 </template>
 <script>
@@ -88,6 +118,10 @@ export default {
 			this.alert.hidden = true;
 			this.alert.msg = '';
             this.alert.type = '';
+		},
+		addBook() {
+			this.mode = 'book';
+			this.$nextTick(() => this.$refs.book.create());
 		},
 		refreshGraph() {
 			var self = this;

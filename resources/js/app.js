@@ -7,9 +7,12 @@ Vue.use(DataTable);
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import {
+    faBook,
     faCamera,
     faCheck,
+    faList,
     faPencilAlt,
+    faUser,
     faPlus,
     faPrint,
     faSearch,
@@ -18,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-library.add(faCamera, faCheck, faPencilAlt, faPlus, faPrint, faSearch, faTimes, faTrash);
+library.add(faBook, faCamera, faCheck, faList, faPencilAlt, faUser, faPlus, faPrint, faSearch, faTimes, faTrash);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
