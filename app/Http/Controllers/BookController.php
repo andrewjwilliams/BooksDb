@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Book;
 use App\Models\Subject;
+use App\Models\SubjectDuplicate;
 use JamesDordoy\LaravelVueDatatable\Http\Resources\DataTableCollectionResource;
 
 class BookController extends Controller
@@ -93,9 +94,14 @@ class BookController extends Controller
         foreach ($names as $name) {
             $name = trim($name);
             if ($name === '') continue;
-            $subject = Subject::firstOrCreate(['name' => $name]);
-            $ids[] = $subject->id;
+            $dup = SubjectDuplicate::where('name', $name)->first();
+            if ($dup) {
+                $ids[] = $dup->subject_id;
+            } else {
+                $subject = Subject::firstOrCreate(['name' => $name]);
+                $ids[] = $subject->id;
+            }
         }
-        $book->subjects()->sync($ids);
+        $book->subjects()->sync(array_unique($ids));
     }
 }
