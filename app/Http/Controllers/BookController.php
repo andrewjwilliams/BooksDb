@@ -91,17 +91,26 @@ class BookController extends Controller
     private function syncSubjects(Book $book, array $names): void
     {
         $ids = [];
-        foreach ($names as $name) {
-            $name = trim($name);
+        foreach ($names as $raw) {
+            $name = self::normalizeSubjectName($raw);
             if ($name === '') continue;
-            $dup = SubjectDuplicate::where('name', $name)->first();
+            $lower = strtolower($name);
+
+            $dup = SubjectDuplicate::whereRaw('LOWER(name) = ?', [$lower])->first();
             if ($dup) {
                 $ids[] = $dup->subject_id;
-            } else {
-                $subject = Subject::firstOrCreate(['name' => $name]);
-                $ids[] = $subject->id;
+                continue;
             }
+
+            $subject = Subject::whereRaw('LOWER(name) = ?', [$lower])->first()
+                ?? Subject::create(['name' => $name]);
+            $ids[] = $subject->id;
         }
         $book->subjects()->sync(array_unique($ids));
+    }
+
+    private static function normalizeSubjectName(string $name): string
+    {
+        return rtrim(trim($name), '.,;');
     }
 }

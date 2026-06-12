@@ -17,18 +17,23 @@ class SubjectDuplicateController extends Controller
 
     public function store(Request $request)
     {
+        $name = self::normalizeSubjectName($request->input('name', ''));
+
         $request->validate([
-            'name'       => 'required|unique:subject_duplicates,name',
+            'name'       => 'required',
             'subject_id' => 'required|exists:subjects,id',
         ]);
 
-        $name        = trim($request->input('name'));
+        if (SubjectDuplicate::whereRaw('LOWER(name) = ?', [strtolower($name)])->exists()) {
+            return response(['errors' => ['name' => ['An alias with this name already exists.']]], 422);
+        }
+
         $canonicalId = (int) $request->input('subject_id');
 
         $duplicate = SubjectDuplicate::create(['name' => $name, 'subject_id' => $canonicalId]);
 
         // If an existing subject has this alias name, migrate its books to the canonical subject
-        $aliasSubject = Subject::where('name', $name)->first();
+        $aliasSubject = Subject::whereRaw('LOWER(name) = LOWER(?)', [$name])->first();
         if ($aliasSubject && $aliasSubject->id !== $canonicalId) {
             $bookIds = DB::table('book_subject')
                 ->where('subject_id', $aliasSubject->id)
@@ -52,5 +57,10 @@ class SubjectDuplicateController extends Controller
     {
         SubjectDuplicate::destroy($id);
         return response(null, Response::HTTP_OK);
+    }
+
+    private static function normalizeSubjectName(string $name): string
+    {
+        return rtrim(trim($name), '.,;');
     }
 }
