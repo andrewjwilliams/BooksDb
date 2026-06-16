@@ -53,6 +53,17 @@
             </div>
         </div>
 
+        <div v-if="book.ebooks && book.ebooks.length > 0" class="card mt-3">
+            <div class="card-header">
+                eBooks
+            </div>
+            <div class="card-body">
+                <div v-for="ebook in book.ebooks" :key="ebook.id">
+                    <a :href="ebook.url" target="_blank">{{ ebook.site_name }}</a>
+                </div>
+            </div>
+        </div>
+
         <br>
 
         <a href="#" v-on:click="closeView()" class="btn btn-info">Back to list</a>
@@ -173,6 +184,10 @@
                         updates.subjects = merged;
                     } else {
                         updates.subjects = (self.book.subjects || []).map(function (s) { return s.name; });
+                    }
+
+                    if (bookObj.ebooks_list && bookObj.ebooks_list.length > 0 && (!self.book.ebooks || self.book.ebooks.length === 0)) {
+                        updates.ebooks = bookObj.ebooks_list;
                     }
 
                     axios.put('/api/books/' + self.book.id, updates).then(function (response) {

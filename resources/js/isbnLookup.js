@@ -61,6 +61,17 @@ function enrichBook(book, isbn, callback) {
 		});
 	};
 
+	// Extract ebooks from OL jscmd=data response
+	if (!book.ebooks_list && book.ebooks && book.ebooks.length > 0) {
+		book.ebooks_list = book.ebooks.map(function (e) {
+			var url = e.read_url || e.preview_url || '';
+			var siteName = 'Unknown';
+			if (url.indexOf('archive.org') !== -1) siteName = 'Internet Archive';
+			else if (url.indexOf('openlibrary.org') !== -1) siteName = 'Open Library';
+			return { url: url, site_name: siteName };
+		}).filter(function (e) { return e.url; });
+	}
+
 	// OL jscmd=data returns subjects as [{name, url}] on the edition record itself
 	if (!book.subjects_list && book.subjects && book.subjects.length > 0) {
 		book.subjects_list = book.subjects.map(function (s) {

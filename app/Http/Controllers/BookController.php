@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Book;
+use App\Models\BookEbook;
 use App\Models\Subject;
 use App\Models\SubjectDuplicate;
 use JamesDordoy\LaravelVueDatatable\Http\Resources\DataTableCollectionResource;
@@ -37,32 +38,35 @@ class BookController extends Controller
     {
         $book = new Book;
         $subjects = $request->input('subjects', []);
+        $ebooks = $request->input('ebooks', []);
 
         foreach ($request->input() as $k => $v) {
-            if ($k !== 'subjects' && isset($v)) {
+            if (!in_array($k, ['subjects', 'ebooks']) && isset($v)) {
                 $book->$k = $v;
             }
         }
 
         $book->save();
         $this->syncSubjects($book, $subjects);
+        $this->syncEbooks($book, $ebooks);
 
-        $book->load('subjects');
+        $book->load(['subjects', 'ebooks']);
         return response($book->toArray(), Response::HTTP_OK);
     }
 
     public function show($id)
     {
-        return response(Book::with('subjects')->find($id)->toArray(), Response::HTTP_OK);
+        return response(Book::with(['subjects', 'ebooks'])->find($id)->toArray(), Response::HTTP_OK);
     }
 
     public function update(Request $request, $id)
     {
         $book = Book::findOrFail($id);
         $subjects = $request->input('subjects', null);
+        $ebooks = $request->input('ebooks', null);
 
         foreach ($request->input() as $k => $v) {
-            if ($k !== 'subjects' && isset($v)) {
+            if (!in_array($k, ['subjects', 'ebooks']) && isset($v)) {
                 $book->$k = $v;
             }
         }
@@ -72,8 +76,11 @@ class BookController extends Controller
         if ($subjects !== null) {
             $this->syncSubjects($book, $subjects);
         }
+        if ($ebooks !== null) {
+            $this->syncEbooks($book, $ebooks);
+        }
 
-        $book->load('subjects');
+        $book->load(['subjects', 'ebooks']);
         return response($book->toArray(), Response::HTTP_OK);
     }
 
@@ -107,6 +114,20 @@ class BookController extends Controller
             $ids[] = $subject->id;
         }
         $book->subjects()->sync(array_unique($ids));
+    }
+
+    private function syncEbooks(Book $book, array $ebooks): void
+    {
+        $book->ebooks()->delete();
+        foreach ($ebooks as $ebook) {
+            $url = $ebook['url'] ?? null;
+            if ($url) {
+                $book->ebooks()->create([
+                    'url'       => $url,
+                    'site_name' => $ebook['site_name'] ?? 'Unknown',
+                ]);
+            }
+        }
     }
 
     private static function normalizeSubjectName(string $name): string

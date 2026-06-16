@@ -519,6 +519,10 @@
 							self.book.subjects = bookObj.subjects_list.map(function (s) { return { name: s }; });
 						}
 
+						if (bookObj.ebooks_list && bookObj.ebooks_list.length > 0) {
+							self.book.ebooks = bookObj.ebooks_list;
+						}
+
 						if (typeof bookObj.identifiers !== 'undefined') {
 							$.each(bookObj.identifiers, function(k, v) {
 								self.book[k] = v.join();
@@ -585,6 +589,11 @@
 
 					// Send subjects as plain name strings; server does find-or-create
 					formFields.subjects = this.bookSubjects.map(function (s) { return s.name; });
+
+					// Send ebooks as plain {url, site_name} objects
+					if (formFields.ebooks && formFields.ebooks.length > 0) {
+						formFields.ebooks = formFields.ebooks.map(function (e) { return { url: e.url, site_name: e.site_name }; });
+					}
 
 					if (this.$parent.mode == 'edit') {
 						axios.put('/api/books/'+id, formFields).then(response => {
