@@ -23,13 +23,20 @@ class BookController extends Controller
         $orderBy = $request->input('column', 'id');
         $orderByDir = $request->input('dir', 'asc');
         $searchValue = $request->input('search');
+        $authorId = $request->input('author_id');
 
-        $data = Book::select('books.id', 'books.title', 'authors.name as author')
-            ->join('authors', 'books.author_id', '=', 'authors.id')
-            ->where("books.title", "LIKE", "%$searchValue%")
-            ->orWhere("authors.name", "LIKE", "%$searchValue%")
-            ->orderBy($orderBy, $orderByDir)
-            ->paginate($length);
+        $query = Book::select('books.id', 'books.title', 'authors.name as author')
+            ->join('authors', 'books.author_id', '=', 'authors.id');
+
+        if ($authorId) {
+            $query->where('books.author_id', $authorId)
+                  ->where('books.title', 'LIKE', "%$searchValue%");
+        } else {
+            $query->where('books.title', 'LIKE', "%$searchValue%")
+                  ->orWhere('authors.name', 'LIKE', "%$searchValue%");
+        }
+
+        $data = $query->orderBy($orderBy, $orderByDir)->paginate($length);
 
         return new DataTableCollectionResource($data);
     }

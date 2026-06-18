@@ -143,7 +143,13 @@ export default {
 			this.author = {
 				id: null,
 				name: "",
+				fuller_name: null,
+				birth_date: null,
+				death_date: null,
+				bio: null,
 				open_library_ref: null,
+				remote_ids: null,
+				links: [],
 			};
 		}
     },

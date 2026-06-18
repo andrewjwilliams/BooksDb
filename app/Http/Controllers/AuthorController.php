@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Author;
+use App\Models\AuthorLink;
 use JamesDordoy\LaravelVueDatatable\Http\Resources\DataTableCollectionResource;
 
 class AuthorController extends Controller
@@ -32,7 +33,7 @@ class AuthorController extends Controller
     public function show($id)
     {
         if (is_numeric($id)) {
-            return response(Author::find($id)->jsonSerialize(), Response::HTTP_OK);
+            return response(Author::with('links')->find($id)->toArray(), Response::HTTP_OK);
         } elseif (substr_count($id, ':')) {
             $key = explode(':', $id);
             return response(Author::where($key[0], $key[1])->get(), Response::HTTP_OK);
@@ -44,31 +45,40 @@ class AuthorController extends Controller
     public function store(Request $request)
     {
         $author = new Author;
+        $links = $request->input('links', []);
 
         foreach ($request->input() as $k => $v) {
-            if (isset($v)) {
+            if ($k !== 'links' && isset($v)) {
                 $author->$k = $v;
             }
         }
 
-        if ($author->save()) {
-            return response($author->jsonSerialize(), Response::HTTP_OK);
-        }
+        $author->save();
+        $this->syncLinks($author, $links);
+
+        $author->load('links');
+        return response($author->toArray(), Response::HTTP_OK);
     }
 
     public function update(Request $request, $id)
     {
         $author = Author::findOrFail($id);
+        $links = $request->input('links', null);
 
         foreach ($request->input() as $k => $v) {
-            if (isset($v)) {
+            if ($k !== 'links' && isset($v)) {
                 $author->$k = $v;
             }
         }
 
         $author->save();
 
-        return response(null, Response::HTTP_OK);
+        if ($links !== null) {
+            $this->syncLinks($author, $links);
+        }
+
+        $author->load('links');
+        return response($author->toArray(), Response::HTTP_OK);
     }
 
     public function destroy($id)
@@ -81,5 +91,19 @@ class AuthorController extends Controller
     public function count()
     {
         return response(['count' => Author::all()->count()], Response::HTTP_OK);
+    }
+
+    private function syncLinks(Author $author, array $links): void
+    {
+        $author->links()->delete();
+        foreach ($links as $link) {
+            $url = $link['url'] ?? null;
+            if ($url) {
+                $author->links()->create([
+                    'title' => $link['title'] ?? $url,
+                    'url'   => $url,
+                ]);
+            }
+        }
     }
 }

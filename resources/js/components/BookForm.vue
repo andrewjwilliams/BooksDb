@@ -296,6 +296,7 @@
 <script>
 	import DatatableActionButton from './DatatableActionButton.vue';
 	import { lookupIsbn, isValidIsbn } from '../isbnLookup.js';
+	import { lookupOlAuthor } from '../authorLookup.js';
 
 	export default {
 		data() {
@@ -531,18 +532,30 @@
 
 						if (typeof bookObj.authors !== 'undefined' && typeof bookObj.authors[0] !== 'undefined') {
 							var authorOlKey = bookObj.authors[0].url;
+							var authorOlRef = authorOlKey.split("/")[4];
 
-							axios.get('/api/authors/open_library_ref:' + authorOlKey.split("/")[4]).then(function (olResponse) {
+							axios.get('/api/authors/open_library_ref:' + authorOlRef).then(function (olResponse) {
 
 								if (olResponse.data.length === 0) {
-									axios.post('/api/authors', {name: bookObj.authors[0].name, open_library_ref:authorOlKey.split("/")[4]}).then(function (sResponse) {
-										self.book.author_id = sResponse.data.id;
-										self.author = sResponse.data;
-
-										root.setAlert('Found book and author from ISBN.', 'success');
-									}).catch(function (error) {
-										root.setAlert("Found book from ISBN, can't get author", 'warning');
-										console.log(error);
+									// New author — fetch full OL details before creating
+									lookupOlAuthor(authorOlRef, function (olData) {
+										var authorPayload = { name: bookObj.authors[0].name, open_library_ref: authorOlRef };
+										if (olData) {
+											if (olData.fuller_name)  authorPayload.fuller_name  = olData.fuller_name;
+											if (olData.birth_date)   authorPayload.birth_date   = olData.birth_date;
+											if (olData.death_date)   authorPayload.death_date   = olData.death_date;
+											if (olData.bio)          authorPayload.bio           = olData.bio;
+											if (olData.remote_ids)   authorPayload.remote_ids    = olData.remote_ids;
+											if (olData.links)        authorPayload.links         = olData.links;
+										}
+										axios.post('/api/authors', authorPayload).then(function (sResponse) {
+											self.book.author_id = sResponse.data.id;
+											self.author = sResponse.data;
+											root.setAlert('Found book and author from ISBN.', 'success');
+										}).catch(function (error) {
+											root.setAlert("Found book from ISBN, can't get author", 'warning');
+											console.log(error);
+										});
 									});
 								} else {
 									self.book.author_id = olResponse.data[0].id;
