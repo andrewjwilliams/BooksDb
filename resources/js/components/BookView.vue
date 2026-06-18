@@ -67,7 +67,8 @@
         <br>
 
         <a href="#" v-on:click="closeView()" class="btn btn-info">Back to list</a>
-        <button v-if="book.isbn" type="button" class="btn btn-warning" v-on:click="refreshFromIsbn()" :disabled="refreshing">
+        <button type="button" class="btn btn-success ml-2" v-on:click="addNew"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add new</button>
+        <button v-if="book.isbn" type="button" class="btn btn-warning ml-2" v-on:click="refreshFromIsbn()" :disabled="refreshing">
             <font-awesome-icon :icon="['fas', 'sync']"></font-awesome-icon> {{ refreshing ? 'Refreshing…' : 'Refresh from ISBN' }}
         </button>
         <a :href="'/books/' + book.id + '/label'" target="_blank" class="btn btn-secondary"><font-awesome-icon :icon="['fas', 'print']"></font-awesome-icon> Print Label</a>
@@ -118,6 +119,9 @@
 				this.$root.$refs.app.clearAlert();
 				this.$parent.mode = 'index';
 			},
+            addNew() {
+                this.$parent.create();
+            },
             refreshFromIsbn() {
                 var self = this;
                 var root = this.$root.$refs.app;

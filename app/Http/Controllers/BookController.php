@@ -31,9 +31,11 @@ class BookController extends Controller
         if ($authorId) {
             $query->where('books.author_id', $authorId)
                   ->where('books.title', 'LIKE', "%$searchValue%");
-        } else {
-            $query->where('books.title', 'LIKE', "%$searchValue%")
+        } elseif ($searchValue) {
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('books.title', 'LIKE', "%$searchValue%")
                   ->orWhere('authors.name', 'LIKE', "%$searchValue%");
+            });
         }
 
         $data = $query->orderBy($orderBy, $orderByDir)->paginate($length);

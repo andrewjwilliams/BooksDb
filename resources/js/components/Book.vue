@@ -7,7 +7,9 @@
 			<data-table
 				url="/api/books/datatable"
 				:per-page="dt.perPage"
-				:columns="dt.columns">
+				:columns="dt.columns"
+				order-by="title"
+				order-dir="asc">
 			</data-table>
 			<div>
 			  <button @click="create" class="btn btn-success"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add</button>
@@ -40,11 +42,13 @@ export default {
 						label: 'Title',
 						name: 'title',
 						filterable: true,
+						orderable: true,
 					},
 					{
 						label: 'Author',
 						name: 'author',
 						filterable: true,
+						orderable: true,
 					},
 					{
 						label: '',

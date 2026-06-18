@@ -35,7 +35,7 @@
 										<div class="card-body d-flex justify-content-between align-items-center">
 											<div>
 												<h5 class="card-title"><font-awesome-icon :icon="['fas', 'book']"></font-awesome-icon> Books</h5>
-												<span class="badge bg-secondary fs-5">{{ num.books }}</span>
+												<span class="badge bg-secondary text-white fs-5">{{ num.books }}</span>
 											</div>
 											<div class="d-flex flex-column gap-2">
 												<a href="#" class="btn btn-sm btn-outline-primary" v-on:click="mode = 'book'"><font-awesome-icon :icon="['fas', 'list']"></font-awesome-icon> List</a>
@@ -49,24 +49,20 @@
 										<div class="card-body d-flex justify-content-between align-items-center">
 											<div>
 												<h5 class="card-title"><font-awesome-icon :icon="['fas', 'user']"></font-awesome-icon> Authors</h5>
-												<span class="badge bg-secondary fs-5">{{ num.authors }}</span>
+												<span class="badge bg-secondary text-white fs-5">{{ num.authors }}</span>
 											</div>
 											<div class="d-flex flex-column gap-2">
 												<a href="#" class="btn btn-sm btn-outline-primary" v-on:click="mode = 'author'"><font-awesome-icon :icon="['fas', 'list']"></font-awesome-icon> List</a>
+												<a href="#" class="btn btn-sm btn-outline-success" v-on:click="addAuthor"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add</a>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
 
-							<GChart
-								type="BarChart"
-								:data="chartData"
-								:options="chartOptions"
-							/>
 						</div>
 						<book v-if="mode=='book'" ref="book"></book>
-						<author v-if="mode=='author'"></author>
+						<author v-if="mode=='author'" ref="author"></author>
 					</div>
 				</div>
 			</div>
@@ -75,8 +71,6 @@
 </template>
 <script>
 
-import { GChart } from 'vue-google-charts'
-
 export default {
     data() {
         return {
@@ -84,22 +78,6 @@ export default {
 			num: {
 				books: 0,
 				authors: 0
-			},
-			chartData: [
-				['Item', ''],
-				['Books', 0],
-				['Authors', 0],
-			],
-			chartOptions: {
-				chart: {
-					title: 'Items in Database'
-				},
-				hAxis: {
-					baseline: 0
-				},
-				legend: {
-					position: 'none'
-				}
 			},
 			alert: {
 				msg: '',
@@ -123,12 +101,15 @@ export default {
 			this.mode = 'book';
 			this.$nextTick(() => this.$refs.book.create());
 		},
+		addAuthor() {
+			this.mode = 'author';
+			this.$nextTick(() => this.$refs.author.create());
+		},
 		refreshGraph() {
 			var self = this;
 
 			axios.get('/api/books/count').then(function (response) {
 				self.num.books = response.data.count;
-				self.chartData[1][1] = parseInt(response.data.count);
 			})
 			.catch(function (error) {
 				console.log(error);
@@ -136,7 +117,6 @@ export default {
 
 			axios.get('/api/authors/count').then(function (response) {
 				self.num.authors = response.data.count;
-				self.chartData[2][1] = parseInt(response.data.count);
 			})
 			.catch(function (error) {
 				console.log(error);
@@ -146,8 +126,6 @@ export default {
 	mounted() {
 		this.refreshGraph();
 	},
-	components: {
-		GChart
-	}
+	components: {}
 }
 </script>
