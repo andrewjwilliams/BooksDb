@@ -10,7 +10,7 @@ class Book extends Model
     use LaravelVueDatatableTrait;
 
     protected $fillable = [
-        'title', 'author_id', 'isbn', 'description',
+        'title', 'isbn', 'description',
         'dewey_classification', 'lc_classification', 'publisher',
         'openlibrary', 'google', 'lccn', 'isbn_13',
         'amazon', 'isbn_10', 'oclc', 'librarything',
@@ -21,6 +21,11 @@ class Book extends Model
     public function author()
     {
         return $this->belongsTo(Author::class);
+    }
+
+    public function authors()
+    {
+        return $this->belongsToMany(Author::class);
     }
 
     public function subjects()

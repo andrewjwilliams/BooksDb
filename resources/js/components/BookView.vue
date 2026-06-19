@@ -4,7 +4,9 @@
 
         <h2>{{ book.title }} </h2>
 
-        <h3>{{ author.name }}</h3>
+        <h3 v-if="book.authors && book.authors.length">
+            <span v-for="(a, i) in book.authors" :key="a.id"><template v-if="i > 0">, </template>{{ a.name }}</span>
+        </h3>
 
         {{ book.description }}
 
@@ -81,7 +83,6 @@
 	export default {
 		data() {
 			return {
-                author: {},
                 coverFailed: false,
                 refreshing: false,
             }
@@ -101,18 +102,7 @@
             }
         },
         mounted() {
-			var self = this;
-
 			window.scrollTo(0,0);
-
-			if (this.book.author_id) {
-				axios.get('/api/authors/' + this.book.author_id).then(function (response) {
-					self.author = response.data;
-				})
-				.catch(function (error) {
-					console.log(error);
-				});
-			}
         },
         methods: {
             closeView() {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use App\Models\Book;
 use App\Models\BookEbook;
 use App\Models\Subject;
@@ -25,11 +26,17 @@ class BookController extends Controller
         $searchValue = $request->input('search');
         $authorId = $request->input('author_id');
 
-        $query = Book::select('books.id', 'books.title', 'authors.name as author')
-            ->join('authors', 'books.author_id', '=', 'authors.id');
+        $query = Book::select(
+                'books.id',
+                'books.title',
+                DB::raw('GROUP_CONCAT(authors.name ORDER BY authors.name SEPARATOR ", ") as author')
+            )
+            ->leftJoin('author_book', 'books.id', '=', 'author_book.book_id')
+            ->leftJoin('authors', 'author_book.author_id', '=', 'authors.id')
+            ->groupBy('books.id', 'books.title');
 
         if ($authorId) {
-            $query->where('books.author_id', $authorId)
+            $query->where('author_book.author_id', $authorId)
                   ->where('books.title', 'LIKE', "%$searchValue%");
         } elseif ($searchValue) {
             $query->where(function ($q) use ($searchValue) {
@@ -46,42 +53,38 @@ class BookController extends Controller
     public function store(Request $request)
     {
         $book = new Book;
+        $authorIds = $request->input('author_ids', []);
         $subjects = $request->input('subjects', []);
         $ebooks = $request->input('ebooks', []);
 
-        foreach ($request->input() as $k => $v) {
-            if (!in_array($k, ['subjects', 'ebooks']) && isset($v)) {
-                $book->$k = $v;
-            }
-        }
-
+        $book->fill($request->except(['author_ids', 'subjects', 'ebooks']));
         $book->save();
+        $this->syncAuthors($book, $authorIds);
         $this->syncSubjects($book, $subjects);
         $this->syncEbooks($book, $ebooks);
 
-        $book->load(['subjects', 'ebooks']);
+        $book->load(['authors', 'subjects', 'ebooks']);
         return response($book->toArray(), Response::HTTP_OK);
     }
 
     public function show($id)
     {
-        return response(Book::with(['subjects', 'ebooks'])->find($id)->toArray(), Response::HTTP_OK);
+        return response(Book::with(['authors', 'subjects', 'ebooks'])->find($id)->toArray(), Response::HTTP_OK);
     }
 
     public function update(Request $request, $id)
     {
         $book = Book::findOrFail($id);
+        $authorIds = $request->input('author_ids', null);
         $subjects = $request->input('subjects', null);
         $ebooks = $request->input('ebooks', null);
 
-        foreach ($request->input() as $k => $v) {
-            if (!in_array($k, ['subjects', 'ebooks']) && isset($v)) {
-                $book->$k = $v;
-            }
-        }
-
+        $book->fill($request->except(['author_ids', 'subjects', 'ebooks']));
         $book->save();
 
+        if ($authorIds !== null) {
+            $this->syncAuthors($book, $authorIds);
+        }
         if ($subjects !== null) {
             $this->syncSubjects($book, $subjects);
         }
@@ -89,7 +92,7 @@ class BookController extends Controller
             $this->syncEbooks($book, $ebooks);
         }
 
-        $book->load(['subjects', 'ebooks']);
+        $book->load(['authors', 'subjects', 'ebooks']);
         return response($book->toArray(), Response::HTTP_OK);
     }
 
@@ -102,6 +105,11 @@ class BookController extends Controller
     public function count()
     {
         return response(['count' => Book::all()->count()], Response::HTTP_OK);
+    }
+
+    private function syncAuthors(Book $book, array $authorIds): void
+    {
+        $book->authors()->sync($authorIds);
     }
 
     private function syncSubjects(Book $book, array $names): void

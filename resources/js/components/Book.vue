@@ -168,7 +168,7 @@ export default {
 			this.book = {
 				id: null,
 				title: "",
-				author_id: null,
+				authors: [],
 				isbn: "",
 				dewey_classification: null,
 				lc_classification: null,

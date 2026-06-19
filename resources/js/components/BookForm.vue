@@ -41,29 +41,30 @@
 				</div>
 			</div>
 
-			<input type="hidden" v-model="book.author_id" name="author_id" ref="author_id">
-
 			<div class="col-xs-12 col-sm-12 col-md-12">
 				<div class="form-group">
-					<label for="title">Author</label>
-					<div v-if="book.author_id && !authorSelector" class="input-group mb-3">
-						<input type="text"  v-model="author.name" id="author" class="form-control" disabled>
-						<div class="input-group-append">
-							<button id="btn_author" v-on:click="authorSelector = true" class="btn btn-info" type="button">Change</button>
-						</div>
+					<label>Authors</label>
+					<div class="subject-tags mb-2">
+						<span v-for="(a, idx) in bookAuthors" :key="idx" class="badge badge-secondary subject-tag">
+							{{ a.name }}
+							<button type="button" class="subject-tag__remove" @click="removeAuthor(idx)" aria-label="Remove">&times;</button>
+						</span>
+						<span v-if="bookAuthors.length === 0" class="text-muted">No authors selected</span>
 					</div>
 
-					<div v-if="!book.author_id || authorSelector" class="col-xs-12 col-sm-12 col-md-12">
+					<div v-if="authorSelector" class="col-xs-12 col-sm-12 col-md-12 mb-2">
 						<data-table
 							url="/api/authors/datatable"
 							:per-page="authorsDt.perPage"
 							:columns="authorsDt.columns">
 						</data-table>
-
-						<button @click="createAuthor" class="btn btn-success" type="button"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add</button>
-
-						<button v-on:click="authorSelector = false" class="btn btn-danger" type="button" :disabled=!book.author_id><font-awesome-icon :icon="['fas', 'times']"></font-awesome-icon> Close Selector</button>
 					</div>
+
+					<button @click="authorSelector = !authorSelector" class="btn btn-info" type="button">
+						<font-awesome-icon :icon="['fas', authorSelector ? 'times' : 'plus']"></font-awesome-icon>
+						{{ authorSelector ? 'Close Selector' : 'Select Author' }}
+					</button>
+					<button @click="createAuthor" class="btn btn-success ml-1" type="button"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add New</button>
 				</div>
 			</div>
 
@@ -301,8 +302,7 @@
 	export default {
 		data() {
 			return {
-				author: {},
-				authorSelector : false,
+				authorSelector: false,
 				scannerSupported: false,
 				scannerOpen: false,
 				scannerError: null,
@@ -342,26 +342,17 @@
 			};
         },
 		mounted() {
-			var self = this;
-
 			window.scrollTo(0,0);
-
 			this.scannerSupported = !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
-
-			if (this.book.author_id) {
-				axios.get('/api/authors/' + this.book.author_id).then(function (response) {
-					self.author = response.data;
-				})
-				.catch(function (error) {
-					console.log(error);
-				});
-			}
 		},
 		beforeDestroy() {
 			this.closeScanner();
 		},
 
 		computed: {
+			bookAuthors() {
+				return this.book.authors || [];
+			},
 			bookSubjects() {
 				var subjects = this.book.subjects;
 				if (!subjects || subjects.length === 0) return [];
@@ -372,6 +363,9 @@
 		},
 
 		methods: {
+			removeAuthor(idx) {
+				this.book.authors.splice(idx, 1);
+			},
 			addSubject() {
 				var name = this.newSubject.trim();
 				if (!name) return;
@@ -530,45 +524,56 @@
 							});
 						}
 
-						if (typeof bookObj.authors !== 'undefined' && typeof bookObj.authors[0] !== 'undefined') {
-							var authorOlKey = bookObj.authors[0].url;
-							var authorOlRef = authorOlKey.split("/")[4];
+						if (typeof bookObj.authors !== 'undefined' && bookObj.authors.length > 0) {
+							// Process all authors from the OL record sequentially
+							var olAuthors = bookObj.authors.filter(function (a) { return a.url; });
+							var processed = 0;
 
-							axios.get('/api/authors/open_library_ref:' + authorOlRef).then(function (olResponse) {
-
-								if (olResponse.data.length === 0) {
-									// New author — fetch full OL details before creating
-									lookupOlAuthor(authorOlRef, function (olData) {
-										var authorPayload = { name: bookObj.authors[0].name, open_library_ref: authorOlRef };
-										if (olData) {
-											if (olData.fuller_name)  authorPayload.fuller_name  = olData.fuller_name;
-											if (olData.birth_date)   authorPayload.birth_date   = olData.birth_date;
-											if (olData.death_date)   authorPayload.death_date   = olData.death_date;
-											if (olData.bio)          authorPayload.bio           = olData.bio;
-											if (olData.remote_ids)   authorPayload.remote_ids    = olData.remote_ids;
-											if (olData.links)        authorPayload.links         = olData.links;
-										}
-										axios.post('/api/authors', authorPayload).then(function (sResponse) {
-											self.book.author_id = sResponse.data.id;
-											self.author = sResponse.data;
-											root.setAlert('Found book and author from ISBN.', 'success');
-										}).catch(function (error) {
-											root.setAlert("Found book from ISBN, can't get author", 'warning');
-											console.log(error);
-										});
-									});
-								} else {
-									self.book.author_id = olResponse.data[0].id;
-									self.author = olResponse.data[0];
-
-									root.setAlert('Found book and author from ISBN.', 'success');
+							function processNextAuthor(idx) {
+								if (idx >= olAuthors.length) {
+									root.setAlert('Found book and author(s) from ISBN.', 'success');
+									return;
 								}
-							})
-							.catch(function (error) {
-								console.log(error);
-								root.setAlert("Found book from ISBN, can't get author", 'warning');
-							});
+								var olAuthor = olAuthors[idx];
+								var olRef = olAuthor.url.split('/')[4];
 
+								axios.get('/api/authors/open_library_ref:' + olRef).then(function (olResponse) {
+									function addAuthorToBook(authorRecord) {
+										if (!self.book.authors) self.book.authors = [];
+										var alreadyAdded = self.book.authors.some(function (a) { return a.id === authorRecord.id; });
+										if (!alreadyAdded) self.book.authors.push({ id: authorRecord.id, name: authorRecord.name });
+										processNextAuthor(idx + 1);
+									}
+
+									if (olResponse.data.length === 0) {
+										lookupOlAuthor(olRef, function (olData) {
+											var authorPayload = { name: olAuthor.name, open_library_ref: olRef };
+											if (olData) {
+												if (olData.fuller_name) authorPayload.fuller_name = olData.fuller_name;
+												if (olData.birth_date)  authorPayload.birth_date  = olData.birth_date;
+												if (olData.death_date)  authorPayload.death_date  = olData.death_date;
+												if (olData.bio)         authorPayload.bio          = olData.bio;
+												if (olData.remote_ids)  authorPayload.remote_ids   = olData.remote_ids;
+												if (olData.links)       authorPayload.links        = olData.links;
+											}
+											axios.post('/api/authors', authorPayload).then(function (sResponse) {
+												addAuthorToBook(sResponse.data);
+											}).catch(function (error) {
+												console.log(error);
+												processNextAuthor(idx + 1);
+											});
+										});
+									} else {
+										addAuthorToBook(olResponse.data[0]);
+									}
+								}).catch(function (error) {
+									console.log(error);
+									processNextAuthor(idx + 1);
+								});
+							}
+
+							processNextAuthor(0);
+							root.setAlert('Found book from ISBN, looking up author(s)…', 'loading');
 						} else {
 							root.setAlert('Found book from ISBN', 'success');
 						}
@@ -599,6 +604,11 @@
 					delete formFields.id;
 					delete formFields.created_at;
 					delete formFields.updated_at;
+					delete formFields.author_id;
+
+					// Send author_ids as array of IDs
+					formFields.author_ids = this.bookAuthors.map(function (a) { return a.id; });
+					delete formFields.authors;
 
 					// Send subjects as plain name strings; server does find-or-create
 					formFields.subjects = this.bookSubjects.map(function (s) { return s.name; });
@@ -634,17 +644,11 @@
 				this.$parent.mode = 'index';
 			},
 			selectAuthor(data) {
-				var self = this;
-
-				this.book.author_id = data.id;
-
-				axios.get('/api/authors/' + data.id).then(function (response) {
-					self.author = response.data;
-				})
-				.catch(function (error) {
-					console.log(error);
-				});
-
+				var alreadyAdded = this.bookAuthors.some(function (a) { return a.id === data.id; });
+				if (!alreadyAdded) {
+					if (!this.book.authors) this.book.authors = [];
+					this.book.authors.push({ id: data.id, name: data.name });
+				}
 				this.authorSelector = false;
 			},
 			createAuthor() {
@@ -652,21 +656,17 @@
 				var root = this.$root.$refs.app;
 				var newAuthor = prompt("Please enter Author's name", "");
 
-				root.setAlert('Adding author', 'loading');
-
 				if (newAuthor != null && newAuthor != "") {
+					root.setAlert('Adding author', 'loading');
 					axios.post('/api/authors', {name: newAuthor}).then(function (response) {
-						self.book.author_id = response.data.id;
-						self.author = response.data;
-
+						if (!self.book.authors) self.book.authors = [];
+						self.book.authors.push({ id: response.data.id, name: response.data.name });
 						root.setAlert('Added author for book', 'success');
 					}).catch(function (error) {
 						root.setAlert("Can't add author", 'danger');
 						console.log(error);
 					});
 				}
-
-				this.authorSelector = false;
 			}
 		},
 		props: ['book']
