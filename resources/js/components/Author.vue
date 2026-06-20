@@ -8,7 +8,9 @@
 				id="author-index-table"
 				url="/api/authors/datatable"
 				:per-page="dt.perPage"
-				:columns="dt.columns">
+				:columns="dt.columns"
+				order-by="name"
+				order-dir="asc">
 			</data-table>
 			<div>
 			  <button @click="create" class="btn btn-success"><font-awesome-icon :icon="['fas', 'plus']"></font-awesome-icon> Add</button>
@@ -42,6 +44,7 @@ export default {
 						label: 'Name',
 						name: 'name',
 						filterable: true,
+						orderable: true,
 					},
 					{
 						label: '',

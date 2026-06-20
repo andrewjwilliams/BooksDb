@@ -24,4 +24,9 @@ class Author extends Model
     {
         return $this->hasMany(AuthorLink::class);
     }
+
+    public function duplicates()
+    {
+        return $this->hasMany(AuthorDuplicate::class);
+    }
 }

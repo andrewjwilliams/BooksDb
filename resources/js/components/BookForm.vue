@@ -56,7 +56,9 @@
 						<data-table
 							url="/api/authors/datatable"
 							:per-page="authorsDt.perPage"
-							:columns="authorsDt.columns">
+							:columns="authorsDt.columns"
+							order-by="name"
+							order-dir="asc">
 						</data-table>
 					</div>
 

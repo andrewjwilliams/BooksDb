@@ -109,6 +109,57 @@
             <button v-if="author.open_library_ref" type="button" class="btn btn-warning ml-2" v-on:click="fetchFromOl()" :disabled="fetching">
                 <font-awesome-icon :icon="['fas', 'sync']"></font-awesome-icon> {{ fetching ? 'Fetching…' : 'Fetch from Open Library' }}
             </button>
+            <button type="button" class="btn btn-danger ml-2" v-on:click="mergeSelector = !mergeSelector" :disabled="merging">
+                <font-awesome-icon :icon="['fas', 'code-branch']"></font-awesome-icon> Merge into…
+            </button>
+
+            <!-- Merge panel -->
+            <div v-if="mergeSelector" class="card mt-3">
+                <div class="card-header">Merge <strong>{{ author.name }}</strong> into another author</div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">All books and links will move to the selected author. This author record will be deleted and its Open Library ref recorded as a duplicate.</p>
+
+                    <div v-if="!mergeTarget">
+                        <data-table
+                            url="/api/authors/datatable"
+                            :per-page="dt.perPage"
+                            :columns="mergeColumns"
+                            :key="'merge-' + author.id"
+                            order-by="name"
+                            order-dir="asc">
+                        </data-table>
+                    </div>
+
+                    <div v-else class="mt-2">
+                        <p>Merge <strong>{{ author.name }}</strong> into <strong>{{ mergeTarget.name }}</strong>?</p>
+                        <button type="button" class="btn btn-danger mr-2" @click="confirmMerge" :disabled="merging">
+                            <font-awesome-icon :icon="['fas', 'check']"></font-awesome-icon> {{ merging ? 'Merging…' : 'Confirm Merge' }}
+                        </button>
+                        <button type="button" class="btn btn-secondary" @click="mergeTarget = null">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Duplicates recorded for this author -->
+            <div v-if="author.duplicates && author.duplicates.length > 0" class="card mt-3">
+                <div class="card-header">Merged duplicates</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Name</th><th>Open Library Ref</th><th></th></tr></thead>
+                        <tbody>
+                            <tr v-for="dup in author.duplicates" :key="dup.id">
+                                <td>{{ dup.name }}</td>
+                                <td>{{ dup.open_library_ref || '—' }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm" @click="removeDuplicate(dup.id)">
+                                        <font-awesome-icon :icon="['fas', 'trash']"></font-awesome-icon>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -116,12 +167,16 @@
 
 <script>
     import { lookupOlAuthor, REMOTE_ID_SERVICES } from '../authorLookup.js';
+    import DatatableActionButton from './DatatableActionButton.vue';
     import DatatableActionButtons from './DatatableActionButtons.vue';
 
     export default {
         data() {
             return {
                 fetching: false,
+                merging: false,
+                mergeSelector: false,
+                mergeTarget: null,
                 selectedBook: null,
                 coverFailed: false,
                 dt: {
@@ -148,7 +203,20 @@
                             }
                         }
                     ]
-                }
+                },
+                mergeColumns: [
+                    { label: '', name: 'id', filterable: false },
+                    { label: 'Author', name: 'name', filterable: true },
+                    {
+                        label: '',
+                        name: 'Select',
+                        component: DatatableActionButton,
+                        classes: { 'btn': true, 'btn-danger': true, 'btn-sm': true },
+                        event: 'click',
+                        handler: this.selectMergeTarget,
+                        meta: { title: 'Merge into this author' }
+                    }
+                ]
             };
         },
         computed: {
@@ -167,6 +235,8 @@
         watch: {
             'author.id': function () {
                 this.selectedBook = null;
+                this.mergeSelector = false;
+                this.mergeTarget = null;
             }
         },
         methods: {
@@ -189,6 +259,50 @@
             remoteIdLabel(key) {
                 var svc = REMOTE_ID_SERVICES[key];
                 return svc ? svc[1] : key;
+            },
+            selectMergeTarget(data) {
+                if (data.id === this.author.id) {
+                    this.$root.$refs.app.setAlert('Cannot merge an author into itself', 'warning');
+                    return;
+                }
+                this.mergeTarget = data;
+            },
+            confirmMerge() {
+                var self = this;
+                var root = this.$root.$refs.app;
+
+                this.merging = true;
+                root.setAlert('Merging authors…', 'loading');
+
+                axios.post('/api/authors/' + this.author.id + '/merge', { target_id: this.mergeTarget.id })
+                    .then(function () {
+                        root.setAlert('Authors merged successfully', 'success');
+                        self.$parent.mode = 'index';
+                    })
+                    .catch(function (error) {
+                        root.setAlert('Failed to merge authors', 'danger');
+                        console.log(error);
+                    })
+                    .finally(function () {
+                        self.merging = false;
+                        self.mergeSelector = false;
+                        self.mergeTarget = null;
+                    });
+            },
+            removeDuplicate(dupId) {
+                var self = this;
+                var root = this.$root.$refs.app;
+
+                axios.delete('/api/author-duplicates/' + dupId)
+                    .then(function () {
+                        self.$parent.author.duplicates = self.$parent.author.duplicates.filter(function (d) {
+                            return d.id !== dupId;
+                        });
+                        root.setAlert('Duplicate removed', 'success');
+                    })
+                    .catch(function () {
+                        root.setAlert('Failed to remove duplicate', 'danger');
+                    });
             },
             fetchFromOl() {
                 var self = this;

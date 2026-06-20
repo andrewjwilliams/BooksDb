@@ -5,6 +5,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SubjectDuplicateController;
+use App\Http\Controllers\AuthorDuplicateController;
 
 Route::get('books/datatable', [BookController::class, 'datatable']);
 Route::get('books/count', [BookController::class, 'count']);
@@ -20,4 +21,9 @@ Route::delete('subject-duplicates/{id}', [SubjectDuplicateController::class, 'de
 
 Route::get('authors/datatable', [AuthorController::class, 'datatable']);
 Route::get('authors/count', [AuthorController::class, 'count']);
+Route::post('authors/{id}/merge', [AuthorController::class, 'merge']);
 Route::resource('/authors', AuthorController::class)->except(['edit']);
+
+Route::get('author-duplicates', [AuthorDuplicateController::class, 'index']);
+Route::post('author-duplicates', [AuthorDuplicateController::class, 'store']);
+Route::delete('author-duplicates/{id}', [AuthorDuplicateController::class, 'destroy']);
