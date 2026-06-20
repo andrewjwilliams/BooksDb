@@ -24,7 +24,8 @@ class BookController extends Controller
         $orderBy = $request->input('column', 'id');
         $orderByDir = $request->input('dir', 'asc');
         $searchValue = $request->input('search');
-        $authorId = $request->input('author_id');
+        $authorId  = $request->input('author_id');
+        $subjectId = $request->input('subject_id');
 
         $query = Book::select(
                 'books.id',
@@ -37,6 +38,10 @@ class BookController extends Controller
 
         if ($authorId) {
             $query->where('author_book.author_id', $authorId)
+                  ->where('books.title', 'LIKE', "%$searchValue%");
+        } elseif ($subjectId) {
+            $query->join('book_subject', 'books.id', '=', 'book_subject.book_id')
+                  ->where('book_subject.subject_id', $subjectId)
                   ->where('books.title', 'LIKE', "%$searchValue%");
         } elseif ($searchValue) {
             $query->where(function ($q) use ($searchValue) {

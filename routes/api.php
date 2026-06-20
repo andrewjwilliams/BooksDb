@@ -11,8 +11,12 @@ Route::get('books/datatable', [BookController::class, 'datatable']);
 Route::get('books/count', [BookController::class, 'count']);
 Route::resource('/books', BookController::class)->except(['edit']);
 
+Route::get('subjects/datatable', [SubjectController::class, 'datatable']);
+Route::get('subjects/count', [SubjectController::class, 'count']);
 Route::get('subjects', [SubjectController::class, 'index']);
 Route::post('subjects', [SubjectController::class, 'store']);
+Route::get('subjects/{id}', [SubjectController::class, 'show']);
+Route::put('subjects/{id}', [SubjectController::class, 'update']);
 Route::delete('subjects/{id}', [SubjectController::class, 'destroy']);
 
 Route::get('subject-duplicates', [SubjectDuplicateController::class, 'index']);

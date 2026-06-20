@@ -19,7 +19,10 @@
         </div>
 
         <div v-if="book.subjects && book.subjects.length > 0" class="mb-3">
-            <span v-for="subject in book.subjects" :key="subject.id" class="badge badge-secondary mr-1">{{ subject.name }}</span>
+            <span v-for="subject in book.subjects" :key="subject.id"
+                  class="badge badge-secondary mr-1"
+                  style="cursor:pointer"
+                  @click="goToSubject(subject)">{{ subject.name }}</span>
         </div>
 
         <p>
@@ -109,6 +112,13 @@
 				this.$root.$refs.app.clearAlert();
 				this.$parent.mode = 'index';
 			},
+            goToSubject(subject) {
+                var self = this;
+                this.$root.$refs.app.mode = 'subject';
+                this.$nextTick(function () {
+                    self.$root.$refs.app.$refs.subject.viewSubjectById(subject.id);
+                });
+            },
             addNew() {
                 this.$parent.create();
             },

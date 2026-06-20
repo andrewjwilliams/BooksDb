@@ -28,7 +28,7 @@
 							<p>
 								Welcome to BooksDb. Please make your choice from the menu above.
 							</p>
-							
+
 							<div class="row">
 								<div class="col-md-6 mb-3">
 									<div class="card h-100">
@@ -58,11 +58,25 @@
 										</div>
 									</div>
 								</div>
+								<div class="col-md-6 mb-3">
+									<div class="card h-100">
+										<div class="card-body d-flex justify-content-between align-items-center">
+											<div>
+												<h5 class="card-title"><font-awesome-icon :icon="['fas', 'tags']"></font-awesome-icon> Subjects</h5>
+												<span class="badge bg-secondary text-white fs-5">{{ num.subjects }}</span>
+											</div>
+											<div class="d-flex flex-column gap-2">
+												<a href="#" class="btn btn-sm btn-outline-primary" v-on:click="mode = 'subject'"><font-awesome-icon :icon="['fas', 'list']"></font-awesome-icon> List</a>
+											</div>
+										</div>
+									</div>
+								</div>
 							</div>
 
 						</div>
 						<book v-if="mode=='book'" ref="book"></book>
 						<author v-if="mode=='author'" ref="author"></author>
+						<subject v-if="mode=='subject'" ref="subject"></subject>
 					</div>
 				</div>
 			</div>
@@ -77,7 +91,8 @@ export default {
 			mode: 'index',
 			num: {
 				books: 0,
-				authors: 0
+				authors: 0,
+				subjects: 0,
 			},
 			alert: {
 				msg: '',
@@ -110,17 +125,15 @@ export default {
 
 			axios.get('/api/books/count').then(function (response) {
 				self.num.books = response.data.count;
-			})
-			.catch(function (error) {
-				console.log(error);
-			});
+			}).catch(function (error) { console.log(error); });
 
 			axios.get('/api/authors/count').then(function (response) {
 				self.num.authors = response.data.count;
-			})
-			.catch(function (error) {
-				console.log(error);
-			});
+			}).catch(function (error) { console.log(error); });
+
+			axios.get('/api/subjects/count').then(function (response) {
+				self.num.subjects = response.data.count;
+			}).catch(function (error) { console.log(error); });
 		}
 	},
 	mounted() {

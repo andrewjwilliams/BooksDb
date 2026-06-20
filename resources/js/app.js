@@ -10,8 +10,10 @@ import {
     faBook,
     faCamera,
     faCheck,
+    faCodeBranch,
     faList,
     faPencilAlt,
+    faTags,
     faUser,
     faPlus,
     faPrint,
@@ -21,7 +23,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-library.add(faBook, faCamera, faCheck, faList, faPencilAlt, faUser, faPlus, faPrint, faSearch, faTimes, faTrash);
+library.add(faBook, faCamera, faCheck, faCodeBranch, faList, faPencilAlt, faTags, faUser, faPlus, faPrint, faSearch, faTimes, faTrash);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
@@ -33,6 +35,9 @@ import AuthorView from './components/AuthorView.vue';
 import Book from './components/Book.vue';
 import BookForm from './components/BookForm.vue';
 import BookView from './components/BookView.vue';
+import Subject from './components/Subject.vue';
+import SubjectForm from './components/SubjectForm.vue';
+import SubjectView from './components/SubjectView.vue';
 import DatatableActionButton from './components/DatatableActionButton.vue';
 
 Vue.component('app', App);
@@ -43,6 +48,9 @@ Vue.component('author-view', AuthorView);
 Vue.component('book', Book);
 Vue.component('book-form', BookForm);
 Vue.component('book-view', BookView);
+Vue.component('subject', Subject);
+Vue.component('subject-form', SubjectForm);
+Vue.component('subject-view', SubjectView);
 Vue.component('datatable-action-button', DatatableActionButton);
 
 const app = new Vue({

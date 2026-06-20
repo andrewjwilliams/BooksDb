@@ -22,6 +22,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#" v-on:click="setAppMode('author')">Authors</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" v-on:click="setAppMode('subject')">Subjects</a>
+                    </li>
                 </ul>
             </div>
         </div>
