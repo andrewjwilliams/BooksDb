@@ -231,7 +231,7 @@
 
         <div class="label__bottom">
             <div class="title">{{ $book->title }}</div>
-            <div class="author">{{ $book->author->name ?? '' }}</div>
+            <div class="author">{{ $book->authors->pluck('name')->implode(', ') }}</div>
         </div>
 
         <div class="label__side">

@@ -14,7 +14,7 @@ class LabelImageService
      */
     public function render(Book $book, string $tape = '62'): string
     {
-        $book->loadMissing('author');
+        $book->loadMissing('authors');
 
         $tapes = config('printing.tapes', []);
         if (! isset($tapes[$tape])) {
@@ -37,7 +37,7 @@ class LabelImageService
         $libraryName = (string) config('app.library_name', 'Library');
         $domain = parse_url((string) config('app.url'), PHP_URL_HOST) ?? '';
         $title = (string) ($book->title ?? '');
-        $author = (string) optional($book->author)->name;
+        $author = $book->authors->pluck('name')->implode(', ');
         $dewey = (string) ($book->dewey_classification ?? '');
 
         $sideStripWidth = 80;

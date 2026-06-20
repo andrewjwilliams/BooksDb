@@ -9,7 +9,7 @@ class LabelController extends Controller
 {
     public function show(Book $book)
     {
-        $book->load('author');
+        $book->load('authors');
 
         return view('labels.book', [
             'book' => $book,
