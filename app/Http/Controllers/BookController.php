@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use App\Models\Book;
 use App\Models\BookEbook;
 use App\Models\Subject;
@@ -150,6 +151,35 @@ class BookController extends Controller
                 ]);
             }
         }
+    }
+
+    public function classify(string $isbn)
+    {
+        $response = Http::timeout(10)->get('https://classify.oclc.org/classify2/Classify', [
+            'isbn'    => $isbn,
+            'summary' => 'true',
+        ]);
+
+        if (!$response->successful()) {
+            return response()->json(['dewey' => null, 'lcc' => null]);
+        }
+
+        $xml = @simplexml_load_string($response->body());
+        if (!$xml) {
+            return response()->json(['dewey' => null, 'lcc' => null]);
+        }
+
+        $xml->registerXPathNamespace('c', 'http://classify.oclc.org');
+
+        $dewey = null;
+        $ddc = $xml->xpath('//c:ddc/c:mostPopular/@sfa');
+        if ($ddc) $dewey = (string) $ddc[0];
+
+        $lcc = null;
+        $lccNodes = $xml->xpath('//c:lcc/c:mostPopular/@sfa');
+        if ($lccNodes) $lcc = (string) $lccNodes[0];
+
+        return response()->json(['dewey' => $dewey ?: null, 'lcc' => $lcc ?: null]);
     }
 
     private static function normalizeSubjectName(string $name): string

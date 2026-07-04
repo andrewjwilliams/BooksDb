@@ -9,6 +9,7 @@ use App\Http\Controllers\AuthorDuplicateController;
 
 Route::get('books/datatable', [BookController::class, 'datatable']);
 Route::get('books/count', [BookController::class, 'count']);
+Route::get('books/classify/{isbn}', [BookController::class, 'classify']);
 Route::resource('/books', BookController::class)->except(['edit']);
 
 Route::get('subjects/datatable', [SubjectController::class, 'datatable']);

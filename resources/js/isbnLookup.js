@@ -7,7 +7,9 @@ export function lookupIsbn(callback, value) {
 
 		var alt = alternateIsbnForm(value);
 		if (!alt) {
-			lookupGoogleBooks(value, function (gb) { callback(gb || false); });
+			lookupGoogleBooks(value, function (gb) {
+				if (gb) { lookupMissingDewey(gb, value, callback); } else { callback(false); }
+			});
 			return;
 		}
 
@@ -16,7 +18,9 @@ export function lookupIsbn(callback, value) {
 			if (altResult) {
 				enrichBook(altResult, value, callback);
 			} else {
-				lookupGoogleBooks(value, function (gb) { callback(gb || false); });
+				lookupGoogleBooks(value, function (gb) {
+					if (gb) { lookupMissingDewey(gb, value, callback); } else { callback(false); }
+				});
 			}
 		});
 	});
@@ -35,8 +39,12 @@ function enrichBook(book, isbn, callback) {
 			|| !book.subjects_list
 			|| book.subjects_list.length === 0;
 
+		var afterGoogleBooks = function () {
+			lookupMissingDewey(book, isbn, callback);
+		};
+
 		if (!needsMore) {
-			callback(book);
+			afterGoogleBooks();
 			return;
 		}
 
@@ -57,7 +65,7 @@ function enrichBook(book, isbn, callback) {
 					});
 				}
 			}
-			callback(book);
+			afterGoogleBooks();
 		});
 	};
 
@@ -94,6 +102,19 @@ function enrichBook(book, isbn, callback) {
 				// Works subjects are flat strings; use them if edition had none
 				if (!book.subjects_list && works.subjects && works.subjects.length > 0) {
 					book.subjects_list = works.subjects.slice(0, 15);
+				}
+				// Extract classifications from works record if not on the edition
+				if (works.dewey_decimal_class && works.dewey_decimal_class.length > 0) {
+					if (!book.classifications) book.classifications = {};
+					if (!book.classifications.dewey_decimal_class) {
+						book.classifications.dewey_decimal_class = works.dewey_decimal_class;
+					}
+				}
+				if (works.lc_classifications && works.lc_classifications.length > 0) {
+					if (!book.classifications) book.classifications = {};
+					if (!book.classifications.lc_classifications) {
+						book.classifications.lc_classifications = works.lc_classifications;
+					}
 				}
 				afterWorks();
 			},
@@ -193,6 +214,70 @@ function isbn10to13(isbn10) {
 	}
 	var check = (10 - (sum % 10)) % 10;
 	return core + String(check);
+}
+
+function lookupMissingDewey(book, isbn, callback) {
+	if (book.classifications && book.classifications.dewey_decimal_class) {
+		callback(book);
+		return;
+	}
+
+	lookupOlSearchDewey(isbn, function (ddc, lcc) {
+		if (ddc) {
+			if (!book.classifications) book.classifications = {};
+			book.classifications.dewey_decimal_class = [ddc];
+		}
+		if (lcc && !(book.classifications && book.classifications.lc_classifications)) {
+			if (!book.classifications) book.classifications = {};
+			book.classifications.lc_classifications = [lcc];
+		}
+
+		if (book.classifications && book.classifications.dewey_decimal_class) {
+			callback(book);
+			return;
+		}
+
+		lookupOclcClassify(isbn, function (ddc2, lcc2) {
+			if (ddc2) {
+				if (!book.classifications) book.classifications = {};
+				book.classifications.dewey_decimal_class = [ddc2];
+			}
+			if (lcc2 && !(book.classifications && book.classifications.lc_classifications)) {
+				if (!book.classifications) book.classifications = {};
+				book.classifications.lc_classifications = [lcc2];
+			}
+			callback(book);
+		});
+	});
+}
+
+function lookupOlSearchDewey(isbn, callback) {
+	$.ajax({
+		type: 'get',
+		url: 'https://openlibrary.org/search.json?isbn=' + isbn + '&fields=dewey_decimal_class,lc_classifications&limit=1',
+		success: function (response) {
+			if (response.docs && response.docs.length > 0) {
+				var doc = response.docs[0];
+				var ddc = (doc.dewey_decimal_class && doc.dewey_decimal_class.length > 0) ? doc.dewey_decimal_class[0] : null;
+				var lcc = (doc.lc_classifications && doc.lc_classifications.length > 0) ? doc.lc_classifications[0] : null;
+				callback(ddc, lcc);
+			} else {
+				callback(null, null);
+			}
+		},
+		error: function () { callback(null, null); }
+	});
+}
+
+function lookupOclcClassify(isbn, callback) {
+	$.ajax({
+		type: 'get',
+		url: '/api/books/classify/' + isbn,
+		success: function (response) {
+			callback(response.dewey || null, response.lcc || null);
+		},
+		error: function () { callback(null, null); }
+	});
 }
 
 export function isValidIsbn(str) {
