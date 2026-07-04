@@ -3,10 +3,11 @@
 		<div class="heading">
 		  <h1>Authors</h1>
 		</div>
-		<div id="author-index" v-if="this.mode == 'index'">
+		<div id="author-index" v-show="this.mode == 'index'">
 			<data-table
 				id="author-index-table"
-				url="/api/authors/datatable"
+				ref="dataTable"
+				:url="dtUrl"
 				:per-page="dt.perPage"
 				:columns="dt.columns"
 				order-by="name"
@@ -25,8 +26,10 @@
 <script>
 
 import DatatableActionButtons from './DatatableActionButtons.vue';
+import rememberDatatablePage from '../mixins/rememberDatatablePage';
 
 export default {
+    mixins: [rememberDatatablePage('booksdb.datatable.page.authors', '/api/authors/datatable')],
     data() {
         return {
 			componentKey: 0,

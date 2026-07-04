@@ -3,9 +3,10 @@
 		<div class="heading">
 		  <h1>Books</h1>
 		</div>
-		<div id="books-index" v-if="this.mode == 'index'">
+		<div id="books-index" v-show="this.mode == 'index'">
 			<data-table
-				url="/api/books/datatable"
+				ref="dataTable"
+				:url="dtUrl"
 				:per-page="dt.perPage"
 				:columns="dt.columns"
 				order-by="title"
@@ -24,8 +25,10 @@
 <script>
 
 import DatatableActionButtons from './DatatableActionButtons.vue';
+import rememberDatatablePage from '../mixins/rememberDatatablePage';
 
 export default {
+    mixins: [rememberDatatablePage('booksdb.datatable.page.books', '/api/books/datatable')],
     data() {
         return {
 			mode: 'index',
