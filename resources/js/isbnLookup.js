@@ -237,10 +237,11 @@ function lookupMissingDewey(book, isbn, callback) {
 			return;
 		}
 
-		lookupOclcClassify(isbn, function (ddc2, lcc2) {
+		lookupDeweyLookup(isbn, function (ddc2, lcc2, suggested) {
 			if (ddc2) {
 				if (!book.classifications) book.classifications = {};
 				book.classifications.dewey_decimal_class = [ddc2];
+				book.dewey_decimal_suggested = suggested;
 			}
 			if (lcc2 && !(book.classifications && book.classifications.lc_classifications)) {
 				if (!book.classifications) book.classifications = {};
@@ -269,14 +270,28 @@ function lookupOlSearchDewey(isbn, callback) {
 	});
 }
 
-function lookupOclcClassify(isbn, callback) {
+// Undocumented but CORS-open public API behind deweylookup.com. Aggregates Open
+// Library, HathiTrust, LOC, Harvard and K10plus, with a labelled Annif-composed
+// suggestion as last resort. No published SLA/rate limit — best-effort fallback only.
+function lookupDeweyLookup(isbn, callback) {
 	$.ajax({
 		type: 'get',
-		url: '/api/books/classify/' + isbn,
+		url: 'https://api.deweylookup.com/lookup?isbn=' + isbn,
 		success: function (response) {
-			callback(response.dewey || null, response.lcc || null);
+			if (response.dewey) {
+				callback(response.dewey, response.lc || null, false);
+				return;
+			}
+			var suggestion = response.deweySuggestions
+				&& response.deweySuggestions.candidates
+				&& response.deweySuggestions.candidates[0];
+			if (suggestion && suggestion.value) {
+				callback(suggestion.value, response.lc || null, true);
+				return;
+			}
+			callback(null, response.lc || null, false);
 		},
-		error: function () { callback(null, null); }
+		error: function () { callback(null, null, false); }
 	});
 }
 

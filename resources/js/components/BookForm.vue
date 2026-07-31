@@ -471,8 +471,12 @@
 				function lookupIsbnCallback(bookObj) {
 					if (bookObj) {
 						self.book.title = bookObj.title;
+						var deweySuggestedNote = '';
 						if (typeof bookObj.classifications !== 'undefined' && typeof bookObj.classifications.dewey_decimal_class !== 'undefined') {
 							self.book.dewey_classification = bookObj.classifications.dewey_decimal_class.join();
+							if (bookObj.dewey_decimal_suggested) {
+								deweySuggestedNote = ' Dewey number is a composed suggestion, not a catalog record — please verify.';
+							}
 						} else {
 							self.book.dewey_classification = null;
 						}
@@ -533,7 +537,7 @@
 
 							function processNextAuthor(idx) {
 								if (idx >= olAuthors.length) {
-									root.setAlert('Found book and author(s) from ISBN.', 'success');
+									root.setAlert('Found book and author(s) from ISBN.' + deweySuggestedNote, 'success');
 									return;
 								}
 								var olAuthor = olAuthors[idx];
@@ -577,7 +581,7 @@
 							processNextAuthor(0);
 							root.setAlert('Found book from ISBN, looking up author(s)…', 'loading');
 						} else {
-							root.setAlert('Found book from ISBN', 'success');
+							root.setAlert('Found book from ISBN' + deweySuggestedNote, 'success');
 						}
 
 					} else {
